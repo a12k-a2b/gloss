@@ -49,7 +49,7 @@ const STEPS: Step[] = [
   {
     kicker: "The beaver",
     title: "This is Gloss. I’ll walk you through it — hands on, not a slideshow.",
-    beaver: "The kettle’s on. Tap Continue when you’re ready.",
+    beaver: "First we learn how to read. Then, if you want, how to dress the room.",
     gate: "look",
     next: "Continue",
   },
@@ -59,27 +59,6 @@ const STEPS: Step[] = [
     beaver: "Ninety-five percent of your time stays on the left. Glance right when a word is fog.",
     gate: "look",
     next: "I see it",
-  },
-  {
-    kicker: "Day and night",
-    title: "Tap the sun-and-moon, top right. The page should go ink-dark.",
-    beaver: "That’s night paper. Good for a dim room.",
-    gate: "theme",
-    wait: "ink",
-  },
-  {
-    kicker: "Day and night",
-    title: "Tap it again. Back to cream paper.",
-    beaver: "Day paper. The Daylight likes this in a window.",
-    gate: "theme",
-    wait: "paper",
-  },
-  {
-    kicker: "Day and night",
-    title: "Once more — so it follows the room again.",
-    beaver: "Auto. Light by day, ink at night. We’ll leave it there.",
-    gate: "theme",
-    wait: "system",
   },
   {
     kicker: "Ask a word",
@@ -129,6 +108,48 @@ const STEPS: Step[] = [
     beaver: "You’re in the glossary again. The essay never left.",
     gate: "glossary",
     wait: "close",
+  },
+  {
+    kicker: "Your own pages",
+    title: "Tap the open-book icon — left of the title.",
+    beaver: "This is how a new essay comes in. Have a look. Don’t paste anything yet.",
+    gate: "import",
+    wait: "import-open",
+  },
+  {
+    kicker: "Your own pages",
+    title: "Close that sheet (the X, or the dim paper around it).",
+    beaver: "That’s the last using move. Next are only taste — night, pages, type.",
+    gate: "look",
+    wait: "import-close",
+  },
+  {
+    kicker: "Your taste",
+    title: "You already know how to read. These next taps just dress the room. We’ll put each one back.",
+    beaver: "They’re short. Then you’re free.",
+    gate: "look",
+    next: "Show me the knobs",
+  },
+  {
+    kicker: "Day and night",
+    title: "Tap the sun-and-moon, top right. The page should go ink-dark.",
+    beaver: "That’s night paper. Good for a dim room.",
+    gate: "theme",
+    wait: "ink",
+  },
+  {
+    kicker: "Day and night",
+    title: "Tap it again. Back to cream paper.",
+    beaver: "Day paper. The Daylight likes this in a window.",
+    gate: "theme",
+    wait: "paper",
+  },
+  {
+    kicker: "Day and night",
+    title: "Once more — so it follows the room again.",
+    beaver: "Auto. Light by day, ink at night. We’ll leave it there.",
+    gate: "theme",
+    wait: "system",
   },
   {
     kicker: "Turn pages",
@@ -185,20 +206,6 @@ const STEPS: Step[] = [
     beaver: "You can live wherever is comfortable.",
     gate: "type-down",
     wait: "type-normal",
-  },
-  {
-    kicker: "Your own pages",
-    title: "Tap the open-book icon — left of the title.",
-    beaver: "This is how a new essay comes in. Have a look. Don’t paste anything yet.",
-    gate: "import",
-    wait: "import-open",
-  },
-  {
-    kicker: "Your own pages",
-    title: "Close that sheet (the X, or the dim paper around it).",
-    beaver: "After this tour you can bring a real link. I’ll sit with the tea.",
-    gate: "look",
-    wait: "import-close",
   },
   {
     kicker: "You’re in",
@@ -376,4 +383,3 @@ export function Onboarding() {
     </div>
   );
 }
-
