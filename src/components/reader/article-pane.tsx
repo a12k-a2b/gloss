@@ -4,6 +4,7 @@ import { cn } from "@/lib/cn";
 import { tokensFromParts, tokenize, padContains, type AskToken } from "@/lib/ask-select";
 import { markArticle, type MarkedBlock, type TextPart } from "@/lib/wrap-terms";
 import type { Article } from "@/lib/types";
+import { usePageBreaks } from "@/hooks/use-page-breaks";
 import { useReader } from "@/store/reader";
 
 type TokenMeta = {
@@ -339,10 +340,32 @@ export function ArticlePane({ article }: { article: Article }) {
   const ask = useReader((s) => s.ask);
   const pulseToken = useReader((s) => s.pulseToken);
   const formatSaved = useReader((s) => s.formatSaved);
+  const paginate = useReader((s) => s.paginate);
   const setVisibleTerms = useReader((s) => s.setVisibleTerms);
   const [skinTick, setSkinTick] = useState(0);
+  const [page, setPage] = useState(0);
+  const [flip, setFlip] = useState<null | { dir: "next" | "prev"; html: string; from: number }>(
+    null,
+  );
+  const flipping = useRef(false);
+  const measure = useRef<HTMLElement>(null);
   const marked = useMemo(() => markArticle(article), [article]);
   const useOrigin = !!(formatSaved && article.origin);
+  const breaks = usePageBreaks(scroller, measure, paginate, [
+    article.id,
+    useOrigin,
+    skinTick,
+  ]);
+
+  useEffect(() => {
+    setPage(0);
+    setFlip(null);
+    flipping.current = false;
+  }, [article.id, paginate]);
+
+  useEffect(() => {
+    if (page > breaks.length - 1) setPage(Math.max(0, breaks.length - 1));
+  }, [breaks.length, page]);
 
   const onOriginReady = useCallback(
     (payload: { text: string; tokens: AskToken[]; root: ShadowRoot | null }) => {
@@ -355,6 +378,7 @@ export function ArticlePane({ article }: { article: Article }) {
   useEffect(() => {
     const host = scroller.current;
     if (!focusedTermId || !host || ask) return;
+    if (paginate) return;
     const shadow = host.querySelector(".origin-host")?.shadowRoot;
     const el =
       shadow?.querySelector<HTMLElement>(
@@ -373,7 +397,7 @@ export function ArticlePane({ article }: { article: Article }) {
 
   useEffect(() => {
     const host = scroller.current;
-    if (!host) return;
+    if (!host || paginate) return;
     const shadow = host.querySelector(".origin-host")?.shadowRoot;
     const marks = [
       ...host.querySelectorAll<HTMLElement>("[data-term]"),
@@ -410,7 +434,53 @@ export function ArticlePane({ article }: { article: Article }) {
       if (timer) window.clearTimeout(timer);
       io.disconnect();
     };
-  }, [article.id, formatSaved, skinTick, setVisibleTerms]);
+  }, [article.id, formatSaved, skinTick, setVisibleTerms, paginate]);
+
+  const publishPageTerms = useCallback(() => {
+    const host = scroller.current;
+    if (!host) return;
+    const view = host.getBoundingClientRect();
+    const shadow = host.querySelector(".origin-host")?.shadowRoot;
+    const marks = [
+      ...host.querySelectorAll<HTMLElement>("[data-term]"),
+      ...[...(shadow?.querySelectorAll<HTMLElement>("[data-term]") ?? [])],
+    ];
+    const ids: string[] = [];
+    for (const mark of marks) {
+      if (mark.closest(".page-leaf")) continue;
+      const r = mark.getBoundingClientRect();
+      const id = mark.dataset.term;
+      if (!id) continue;
+      if (r.bottom > view.top + 10 && r.top < view.bottom - 10 && !ids.includes(id)) {
+        ids.push(id);
+      }
+    }
+    setVisibleTerms(ids);
+  }, [setVisibleTerms]);
+
+  useEffect(() => {
+    if (!paginate) return;
+    const t = window.setTimeout(publishPageTerms, 40);
+    return () => window.clearTimeout(t);
+  }, [paginate, page, article.id, skinTick, publishPageTerms]);
+
+  const goPage = useCallback(
+    (next: number, dir: "next" | "prev") => {
+      if (!paginate || flipping.current) return;
+      const last = breaks.length - 1;
+      const target = Math.max(0, Math.min(last, next));
+      if (target === page) return;
+      const html = measure.current?.innerHTML ?? "";
+      flipping.current = true;
+      setFlip({ dir, html, from: breaks[page] ?? 0 });
+      setPage(target);
+      window.setTimeout(() => {
+        setFlip(null);
+        flipping.current = false;
+      }, 620);
+    },
+    [paginate, breaks, page],
+  );
 
   const onPointerDown = (e: React.PointerEvent) => {
     if (e.pointerType === "mouse" && e.button !== 0) return;
@@ -423,7 +493,36 @@ export function ArticlePane({ article }: { article: Article }) {
     if (!start || start.id !== e.pointerId) return;
     const dx = e.clientX - start.x;
     const dy = e.clientY - start.y;
+
+    if (paginate && Math.abs(dx) > 56 && Math.abs(dx) > Math.abs(dy) * 1.25) {
+      if (dx < 0) goPage(page + 1, "next");
+      else goPage(page - 1, "prev");
+      return;
+    }
+
     if (Math.hypot(dx, dy) > 14) return;
+
+    if (paginate && !ask) {
+      const host = scroller.current;
+      if (host) {
+        const box = host.getBoundingClientRect();
+        const path = e.nativeEvent.composedPath();
+        const onToken = path.some(
+          (n) => n instanceof HTMLElement && !!n.dataset.token,
+        );
+        if (!onToken) {
+          const x = e.clientX - box.left;
+          if (x < box.width * 0.18) {
+            goPage(page - 1, "prev");
+            return;
+          }
+          if (x > box.width * 0.82) {
+            goPage(page + 1, "next");
+            return;
+          }
+        }
+      }
+    }
 
     const path = e.nativeEvent.composedPath();
     let target: HTMLElement | null = null;
@@ -507,7 +606,10 @@ export function ArticlePane({ article }: { article: Article }) {
   return (
     <section
       ref={scroller}
-      className="ink-scroll relative h-full min-h-0 min-w-0"
+      className={cn(
+        "relative h-full min-h-0 min-w-0",
+        paginate ? "page-stage" : "ink-scroll",
+      )}
       aria-label="Passage"
       onPointerDown={onPointerDown}
       onPointerUp={onPointerUp}
@@ -515,7 +617,27 @@ export function ArticlePane({ article }: { article: Article }) {
         pointer.current = null;
       }}
     >
-      <article className={cn("article-measure mx-auto", !useOrigin && "article-body")}>
+      {flip ? (
+        <div
+          className={cn("page-leaf", flip.dir === "next" ? "flip-next" : "flip-prev")}
+          aria-hidden
+        >
+          <div
+            className="article-measure mx-auto"
+            style={{ transform: `translateY(-${flip.from}px)` }}
+            dangerouslySetInnerHTML={{ __html: flip.html }}
+          />
+        </div>
+      ) : null}
+      <article
+        ref={measure}
+        className={cn("article-measure mx-auto", !useOrigin && "article-body")}
+        style={
+          paginate
+            ? { transform: `translateY(-${breaks[page] ?? 0}px)` }
+            : undefined
+        }
+      >
         <p className="caps mb-3 px-1">
           {useOrigin ? "As published" : article.source}
           <span className="mx-2 text-rule-strong">·</span>
@@ -563,6 +685,11 @@ export function ArticlePane({ article }: { article: Article }) {
         )}
         <div className="h-16" />
       </article>
+      {paginate && breaks.length > 1 ? (
+        <p className="page-folio" data-page-chrome="true">
+          {page + 1} / {breaks.length}
+        </p>
+      ) : null}
     </section>
   );
 }
