@@ -106,7 +106,7 @@ const happyTerms: Term[] = [
   t({
     id: "gitops",
     term: "GitOps",
-    aliases: [],
+    aliases: ["GitOps repository"],
     gloss: "The computers only change when a shared notebook changes. Saying yes to a suggested edit is how you deploy.",
     explanation:
       "GitOps means the description of what should be running lives in a shared notebook (git). A watcher reads the notebook and makes the machines match. You do not log into the machines and type commands. You propose an edit. When someone accepts it, the machines catch up.",
@@ -729,7 +729,7 @@ const happyTerms: Term[] = [
   t({
     id: "argocd",
     term: "ArgoCD",
-    aliases: ["GitOps repository"],
+    aliases: [],
     gloss: "The clerk who watches the shared notebook and updates the cluster when the notebook changes.",
     explanation:
       "ArgoCD is software that practices GitOps for you. It watches a repository and keeps the cluster looking like the latest accepted page. Denys hands Claude Code an ArgoCD tool so a phone conversation can become a real deploy.",

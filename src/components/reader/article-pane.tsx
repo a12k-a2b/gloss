@@ -5,6 +5,7 @@ import { tokensFromParts, tokenize, padContains, type AskToken } from "@/lib/ask
 import { markArticle, type MarkedBlock, type TextPart } from "@/lib/wrap-terms";
 import type { Article } from "@/lib/types";
 import { usePageBreaks } from "@/hooks/use-page-breaks";
+import { collectVisibleTermIds } from "@/lib/visible-terms";
 import { useReader } from "@/store/reader";
 
 type TokenMeta = {
@@ -398,63 +399,38 @@ export function ArticlePane({ article }: { article: Article }) {
   useEffect(() => {
     const host = scroller.current;
     if (!host || paginate) return;
-    const shadow = host.querySelector(".origin-host")?.shadowRoot;
-    const marks = [
-      ...host.querySelectorAll<HTMLElement>("[data-term]"),
-      ...[...(shadow?.querySelectorAll<HTMLElement>("[data-term]") ?? [])],
-    ];
-    if (marks.length === 0) {
-      setVisibleTerms([]);
-      return;
-    }
-    const visible = new Set<string>();
-    let last: string[] = [];
     let timer: number | null = null;
+    let last: string[] = [];
     const publish = () => {
-      const ids = [...visible];
+      const ids = collectVisibleTermIds(host);
       if (ids.length === 0 && last.length > 0) return;
+      const same =
+        ids.length === last.length && ids.every((id, i) => id === last[i]);
+      if (same) return;
       last = ids;
       setVisibleTerms(ids);
     };
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          const id = (entry.target as HTMLElement).dataset.term;
-          if (!id) continue;
-          if (entry.isIntersecting) visible.add(id);
-          else visible.delete(id);
-        }
-        if (timer) window.clearTimeout(timer);
-        timer = window.setTimeout(publish, 180);
-      },
-      { root: host, rootMargin: "10% 0px 12% 0px", threshold: 0 },
-    );
-    for (const mark of marks) io.observe(mark);
+    const onMove = () => {
+      if (timer) window.clearTimeout(timer);
+      timer = window.setTimeout(publish, 120);
+    };
+    publish();
+    host.addEventListener("scroll", onMove, { passive: true });
+    window.addEventListener("resize", onMove);
+    const ro = new ResizeObserver(onMove);
+    ro.observe(host);
     return () => {
       if (timer) window.clearTimeout(timer);
-      io.disconnect();
+      host.removeEventListener("scroll", onMove);
+      window.removeEventListener("resize", onMove);
+      ro.disconnect();
     };
   }, [article.id, formatSaved, skinTick, setVisibleTerms, paginate]);
 
   const publishPageTerms = useCallback(() => {
     const host = scroller.current;
     if (!host) return;
-    const view = host.getBoundingClientRect();
-    const shadow = host.querySelector(".origin-host")?.shadowRoot;
-    const marks = [
-      ...host.querySelectorAll<HTMLElement>("[data-term]"),
-      ...[...(shadow?.querySelectorAll<HTMLElement>("[data-term]") ?? [])],
-    ];
-    const ids: string[] = [];
-    for (const mark of marks) {
-      if (mark.closest(".page-leaf")) continue;
-      const r = mark.getBoundingClientRect();
-      const id = mark.dataset.term;
-      if (!id) continue;
-      if (r.bottom > view.top + 10 && r.top < view.bottom - 10 && !ids.includes(id)) {
-        ids.push(id);
-      }
-    }
+    const ids = collectVisibleTermIds(host);
     setVisibleTerms(ids);
   }, [setVisibleTerms]);
 
