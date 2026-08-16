@@ -204,9 +204,9 @@ export function ImportSheet() {
         </header>
         <div className="ink-scroll min-h-0 flex-1 space-y-3 px-4 py-4">
           <p className="font-serif text-md leading-reading text-ink-soft">
-            Paste the article. Gloss will underline the jargon and write a
-            teacher's note for each word — the same margin you have on the
-            seeded essays.
+            Paste the article. Gloss will underline the jargon — every name a
+            non-technical reader would trip on — and write a teacher's note for
+            each one. Missed a word? Tap it twice.
           </p>
           <label className="hairline flex h-11 cursor-pointer items-center justify-center rounded-md bg-paper-raised font-sans text-sm font-medium">
             Choose a .txt or .html file
@@ -258,8 +258,9 @@ export function FirstHint() {
     <div className="pointer-events-none absolute inset-x-0 bottom-16 z-20 flex justify-center px-4 lg:bottom-8 lg:left-auto lg:right-6 lg:w-[min(22rem,38vw)]">
       <div className="pointer-events-auto hairline-strong w-full rounded-md bg-paper px-4 py-3">
         <p className="font-serif text-md leading-snug text-ink">
-          Underlined words live in the right margin. Tap one — or swipe it left —
-          to go deeper.
+          Underlined words already have a note — tap one. Any other word: tap
+          twice. Tap again to take the phrase, the sentence, the paragraph. Tap
+          away to keep reading.
         </p>
         <button
           type="button"

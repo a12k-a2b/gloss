@@ -107,9 +107,9 @@ const happyTerms: Term[] = [
     id: "gitops",
     term: "GitOps",
     aliases: [],
-    gloss: "The cluster only changes when a git repo changes. Pull requests are how you deploy.",
+    gloss: "The computers only change when a shared notebook changes. Saying yes to a suggested edit is how you deploy.",
     explanation:
-      "GitOps means the desired state of your infrastructure lives in git. A controller (here, implied by his Helm-via-GitOps flow and later ArgoCD) watches the repo and makes the cluster match. You do not SSH in and kubectl apply. You open a PR. Merge is the deploy.",
+      "GitOps means the description of what should be running lives in a shared notebook (git). A watcher reads the notebook and makes the machines match. You do not log into the machines and type commands. You propose an edit. When someone accepts it, the machines catch up.",
     analogy:
       "The kitchen only cooks what’s on the posted menu. To change dinner, you edit the menu and pin it back on the wall. Nobody yells new orders through the pass.",
     context:
@@ -121,9 +121,9 @@ const happyTerms: Term[] = [
     id: "helm",
     term: "Helm",
     aliases: ["Helm chart"],
-    gloss: "A recipe card for installing an app on Kubernetes — values in, a cluster-shaped cake out.",
+    gloss: "A recipe card for installing an app on the cluster — fill in a few blanks, get a running service.",
     explanation:
-      "Helm is the usual package manager for Kubernetes. A chart is a templated set of manifests (Deployments, Services, and so on) plus a values file you fill in. ‘Install Jellyfin via Helm’ means: don’t write twenty YAML files by hand; parameterize a known recipe.",
+      "Helm is a recipe book for the cluster. A chart is a known recipe plus a short list of your choices (which port, how much memory). ‘Install Jellyfin via Helm’ means: don’t write the whole kitchen plan by hand; use a recipe someone already tested.",
     analogy:
       "A cake mix. You still choose chocolate or vanilla (the values). You do not mill the flour.",
     context:
@@ -417,6 +417,370 @@ const happyTerms: Term[] = [
     excerpt:
       "even if a workspace pod is compromised, it cannot access other services in the cluster or private networks.",
     related: ["yolo", "kubernetes"],
+  }),
+  t({
+    id: "llm",
+    term: "LLM",
+    aliases: ["LLMs", "LLM provider", "LLM providers", "LLM APIs"],
+    gloss: "A very well-read intern you type to. It drafts; it does not know your house.",
+    explanation:
+      "A large language model is the kind of AI Denys is talking to. You write in ordinary language. It writes code, plans, and replies. An ‘LLM provider’ is just the company whose intern you hired this hour — MiniMax, GLM, Anthropic, and the rest.",
+    analogy:
+      "A freelance writer you can text. Brilliant on the page. Has never been inside your apartment.",
+    context:
+      "The whole post is about steering one of these from a phone, and swapping which company you hire without sitting at a desk.",
+    excerpt: "I’ve configured Happy to use different LLM providers depending on the task.",
+    related: ["claude-code", "happy"],
+  }),
+  t({
+    id: "ide",
+    term: "IDE",
+    aliases: ["traditional IDE"],
+    gloss: "The big app programmers live in — a word processor that also runs the program.",
+    explanation:
+      "An IDE is the usual all-in-one writing desk for software: editor, debugger, file tree. Denys is saying Happy plus Claude Code has replaced that desk for most of his day.",
+    analogy:
+      "A carpenter’s full workshop. He still owns one. He now does a surprising amount of work by phone, talking to someone who is already in the workshop.",
+    context:
+      "‘I rarely need a traditional IDE setup anymore’ is the thesis, not a flex.",
+    excerpt: "I rarely need a traditional IDE setup anymore.",
+    related: ["claude-code", "happy"],
+  }),
+  t({
+    id: "ssh",
+    term: "SSH",
+    aliases: ["SSH-ing", "SSH connection", "SSH keys"],
+    gloss: "A locked phone call into another computer’s keyboard.",
+    explanation:
+      "SSH is how you sit at a computer that is somewhere else and type as if you were there. Fine on a laptop. Miserable on a phone: tiny text, broken shortcuts, flickering screens. Happy exists because that phone call is a bad remote control.",
+    analogy:
+      "Borrowing someone’s desk by staring through a mail slot and shouting keystrokes.",
+    context:
+      "The whole ‘Why not Claude Code via SSH?’ section is him listing why the mail slot failed him.",
+    excerpt: "I used Claude Code directly in a terminal by SSH-ing into my container.",
+    related: ["terminal", "tmux", "happy"],
+  }),
+  t({
+    id: "terminal",
+    term: "terminal",
+    aliases: ["terminal UI", "TUI"],
+    gloss: "A text-only window where you type orders to the computer, no buttons.",
+    explanation:
+      "A terminal is a blank page that only understands typed commands. A TUI is a program that still lives in that page — menus drawn with characters, not with tap targets. On a phone it flickers and fights you.",
+    analogy:
+      "A restaurant where the only way to order is to write the kitchen a telegram.",
+    context:
+      "Happy is the opposite: a proper app, with a real text box, talking to the same kitchen.",
+    excerpt: "Claude Code’s terminal UI flickers and behaves erratically over SSH",
+    related: ["ssh", "tmux", "happy"],
+  }),
+  t({
+    id: "tmux",
+    term: "tmux",
+    aliases: ["tmux session"],
+    gloss: "A way to leave a terminal window running after you hang up.",
+    explanation:
+      "tmux keeps a typing session alive on the other computer so you can disconnect and come back. It is what people used before they had a real remote-control app. Denys is done with it.",
+    analogy:
+      "Leaving the TV on pause in a hotel room so the movie is still there after dinner.",
+    context:
+      "Happy is offered as the thing you use instead of locking yourself into a tmux session.",
+    excerpt: "instead of locking you into a tmux session or SSH connection",
+    related: ["ssh", "terminal"],
+  }),
+  t({
+    id: "cli",
+    term: "CLI",
+    aliases: ["Happy CLI", "command line"],
+    gloss: "A program you talk to by typing, not by tapping buttons.",
+    explanation:
+      "A command-line interface is software with no pictures — you type a line, it answers. happy-cli is the small typed tool that introduces your real computer to the Happy app on your phone.",
+    analogy:
+      "The intercom in the lobby. You say a sentence. The building does something.",
+    context:
+      "‘npm install -g happy-coder && happy’ is him handing you that intercom.",
+    excerpt: "This will install the Happy CLI and launch the setup wizard",
+    related: ["npm", "happy"],
+  }),
+  t({
+    id: "npm",
+    term: "npm",
+    aliases: ["Node.js"],
+    gloss: "A store and a toolbox for installing little programs written in JavaScript.",
+    explanation:
+      "Node.js is a way to run JavaScript on a computer, not just in a browser. npm is the shop that fetches those programs. The one-liner in the post is: install the Happy tool from that shop, then run it.",
+    analogy:
+      "An app store you operate with a typed sentence instead of a tap.",
+    context:
+      "The getting-started path for everyone who is not self-hosting.",
+    excerpt: "npm install -g happy-coder && happy",
+    related: ["cli", "happy"],
+  }),
+  t({
+    id: "pull-request",
+    term: "pull request",
+    aliases: ["PR", "pull requests"],
+    gloss: "A suggested edit to a shared notebook. Merge is ‘yes, write it in.’",
+    explanation:
+      "A pull request is a proposed change sitting in a waiting room. Other people can read it, comment, and accept it. Once accepted (merged), it becomes the official text — and in Denys’s world, the official text is what the cluster runs.",
+    analogy:
+      "A suggested revision in the margin of a shared cookbook. When the household says yes, tomorrow’s dinner changes.",
+    context:
+      "The grocery-store story: Happy wrote the suggestion. Accepting it is what turned Jellyfin on.",
+    excerpt: "created the pull request to my GitOps repository",
+    related: ["gitops", "happy"],
+  }),
+  t({
+    id: "jellyfin",
+    term: "Jellyfin",
+    aliases: [],
+    gloss: "A homemade Netflix: your movies, your computer, no monthly bill.",
+    explanation:
+      "Jellyfin is software that plays the films and shows you already own, from a computer in your house, to the rest of your devices. The grocery-store anecdote is not about movies. It is about installing that server from a phone.",
+    analogy:
+      "A family screening room in the basement, with a remote that works from the supermarket.",
+    context:
+      "The one concrete ‘I did this while walking’ story in the essay.",
+    excerpt: "deploy Jellyfin to my home Kubernetes cluster while I was out running errands",
+    related: ["helm", "gitops", "micro-sessions"],
+  }),
+  t({
+    id: "postgres",
+    term: "PostgreSQL",
+    aliases: ["Postgres"],
+    gloss: "The filing cabinet the server writes facts into and can find again tomorrow.",
+    explanation:
+      "PostgreSQL is a database: a careful, long-lived set of tables. Happy’s server stores accounts, sessions, and the like here so a restart does not give everyone amnesia.",
+    analogy:
+      "The parish register. Not a sticky note. A bound book.",
+    context:
+      "Listed next to Redis. Redis is the sticky notes. Postgres is the register.",
+    excerpt: "PostgreSQL — Happy server database",
+    related: ["redis", "longhorn"],
+  }),
+  t({
+    id: "redis",
+    term: "Redis",
+    aliases: [],
+    gloss: "A pad of sticky notes the server uses for things it needs in a hurry.",
+    explanation:
+      "Redis keeps small facts in memory so the server can grab them fast — who is logged in right now, a cached reply. If the pad is thrown away, the filing cabinet (Postgres) still has the real record.",
+    analogy:
+      "The tickets on the kitchen pass. Dinner is still in the book if they fall.",
+    context:
+      "Part of the Happy server stack table, next to Postgres and the file closet.",
+    excerpt: "Redis — Caching and session management",
+    related: ["postgres"],
+  }),
+  t({
+    id: "longhorn",
+    term: "Longhorn",
+    aliases: ["Persistent Storage", "PVC"],
+    gloss: "A hard drive that survives even if the app is torn down and rebuilt.",
+    explanation:
+      "Programs in a cluster are disposable. Persistent storage is the closet that is not. Longhorn is one way to give that closet to a program. A PVC is just the reservation slip for a shelf in it.",
+    analogy:
+      "The apartment can be gutted. The storage unit down the street still has your boxes.",
+    context:
+      "Why the database and the workspace files are not lost every time he updates Happy.",
+    excerpt: "Persistent Storage — Database & files — Longhorn, Ceph, Rook, or cloud",
+    related: ["postgres", "kubernetes"],
+  }),
+  t({
+    id: "talos",
+    term: "Talos Linux",
+    aliases: ["Talos"],
+    gloss: "An operating system that only knows how to be a Kubernetes machine — no desktop, no extras.",
+    explanation:
+      "Talos is a stripped-down computer OS built only to run a cluster. You do not browse the web on it. You do not install random apps. That boredom is the security feature.",
+    analogy:
+      "A kitchen that has no living room. You cannot flop on the sofa because there isn’t one.",
+    context:
+      "How his particular cluster is built. He tells beginners to try a smaller kitchen first (k3s).",
+    excerpt: "My cluster runs on Talos Linux, a purpose-built OS for Kubernetes",
+    related: ["k3s", "kubernetes"],
+  }),
+  t({
+    id: "k3s",
+    term: "k3s",
+    aliases: ["microk8s"],
+    gloss: "Kubernetes in a lunchbox — same idea, much smaller kitchen.",
+    explanation:
+      "k3s and microk8s are smaller, friendlier ways to run the same kind of cluster on one machine. Same vocabulary. Less ceremony. His advice: practice here before you copy the full house.",
+    analogy:
+      "A camping stove before you install a restaurant range.",
+    context:
+      "The closing advice, twice: start with k3s or microk8s.",
+    excerpt: "consider lighter alternatives like k3s or microk8s for testing",
+    related: ["kubernetes", "talos"],
+  }),
+  t({
+    id: "https",
+    term: "HTTPS",
+    aliases: ["TLS", "SSL termination"],
+    gloss: "The lock on a website: the talk is sealed, and the shop proves it is the shop.",
+    explanation:
+      "HTTPS (the lock) is HTTP — ordinary web talk — wrapped in TLS, a handshake that encrypts the conversation and shows a certificate. ‘SSL termination’ means the doorman (Traefik) unwraps that lock and walks the now-plain request inside.",
+    analogy:
+      "A wax-sealed letter the butler opens at the door, then carries the note to the kitchen.",
+    context:
+      "He wants this lock even inside Tailscale. Belt and suspenders. The Android app had to be taught to trust his household seal.",
+    excerpt: "I always want HTTPS enabled—even though Tailscale’s WireGuard tunnel encrypts traffic",
+    related: ["private-ca", "traefik"],
+  }),
+  t({
+    id: "lets-encrypt",
+    term: "Let's Encrypt",
+    aliases: ["Let’s Encrypt", "Certificate Transparency"],
+    gloss: "A free public notary for websites — and a newspaper that prints every name it stamps.",
+    explanation:
+      "Let’s Encrypt is a public certificate authority: it will vouch, for free, that this name belongs to this shop. The catch is Certificate Transparency, a public log of every name it has stamped. Fine for a bakery. Not fine if the name is happy.internal.",
+    analogy:
+      "A city notary who also takes out a classified ad every time they stamp something.",
+    context:
+      "Why he hired a household notary (OpenBao) instead of the free public one.",
+    excerpt: "without exposing my internal hostnames to public Certificate Transparency logs",
+    related: ["private-ca", "openbao"],
+  }),
+  t({
+    id: "react-native",
+    term: "React Native",
+    aliases: [],
+    gloss: "A way to write one app that becomes both iPhone and Android.",
+    explanation:
+      "React Native lets someone write the Happy app once and ship it to phones. You do not need to know this to use Happy. It is why there is one client instead of two separate science projects.",
+    analogy:
+      "One sewing pattern, two sizes of shirt.",
+    context:
+      "A single bullet in the architecture list. Harmless. Included so it does not stay a mysterious proper noun.",
+    excerpt: "happy — The mobile and web client (built with React Native)",
+    related: ["happy"],
+  }),
+  t({
+    id: "open-source",
+    term: "open-source",
+    aliases: ["open source"],
+    gloss: "The recipe is public. Anyone can cook it, copy it, or improve it.",
+    explanation:
+      "Open-source software publishes its own instructions. You can run it yourself, read how it works, and send back a better page. Happy is this. So is OpenBao. So is Jellyfin.",
+    analogy:
+      "A family cookbook left on the porch, with a pencil tied to the spine.",
+    context:
+      "The first fact about Happy, and the reason he can patch the Android app (PR #278).",
+    excerpt: "Happy is an open-source mobile and web client for Claude Code",
+    related: ["happy"],
+  }),
+  t({
+    id: "api",
+    term: "API",
+    aliases: ["API endpoint", "API keys"],
+    gloss: "The doorbell a program rings to ask another program for something.",
+    explanation:
+      "An API is a published way for one piece of software to request work from another. An endpoint is a specific doorbell. An API key is the house key you show when you ring. When the public Happy doorbell started timing out, he built his own.",
+    analogy:
+      "The take-out window. You do not walk into the kitchen. You use the window they designed.",
+    context:
+      "The reason he self-hosted: the public window stopped answering.",
+    excerpt: "the API endpoint started timing out frequently",
+    related: ["self-host", "happy"],
+  }),
+  t({
+    id: "pod",
+    term: "pod",
+    aliases: ["pods", "workspace pod"],
+    gloss: "One running guest in the cluster hotel — a small sealed room with a job.",
+    explanation:
+      "A pod is the smallest unit Kubernetes will run for you: usually one program in a little room. It can be replaced. The workspace pod is the room where Claude Code actually sits and types.",
+    analogy:
+      "A hotel room rented by the hour for one task. If it gets messy, they give you a new room and throw the old one out.",
+    context:
+      "YOLO mode is only sane because this room has no door to the rest of the house.",
+    excerpt: "even if a workspace pod is compromised, it cannot access other services",
+    related: ["kubernetes", "yolo", "networkpolicy"],
+  }),
+  t({
+    id: "container",
+    term: "container",
+    aliases: ["containers"],
+    gloss: "A sealed lunchbox with a program and everything it needs to run, and nothing else.",
+    explanation:
+      "A container is a packed-up program: the app plus its tools, isolated from the rest of the machine. Kubernetes’s job is to place and replace these lunchboxes. A pod is usually one lunchbox on a tray.",
+    analogy:
+      "A bento box. The sandwich cannot wander off and eat the rest of the fridge.",
+    context:
+      "When he says ‘SSH-ing into my container,’ he means climbing into that lunchbox with a keyboard.",
+    excerpt: "I used Claude Code directly in a terminal by SSH-ing into my container.",
+    related: ["pod", "kubernetes"],
+  }),
+  t({
+    id: "workspace",
+    term: "workspace",
+    aliases: ["dev-workspace", "workspace setup"],
+    gloss: "The room where the work actually happens — files, tools, and the daemon waiting for you.",
+    explanation:
+      "The workspace is not the Happy app. It is the place Claude Code sits: your files, your tools, the happy-daemon. The phone is only the intercom into that room.",
+    analogy:
+      "The studio. Happy is the walkie-talkie you take to the store.",
+    context:
+      "A whole section. Isolation, YOLO, MCP tools — all of it is furniture in this room.",
+    excerpt: "All sessions run in a shared dev-workspace container",
+    related: ["happy-daemon", "claude-code", "yolo"],
+  }),
+  t({
+    id: "argocd",
+    term: "ArgoCD",
+    aliases: ["GitOps repository"],
+    gloss: "The clerk who watches the shared notebook and updates the cluster when the notebook changes.",
+    explanation:
+      "ArgoCD is software that practices GitOps for you. It watches a repository and keeps the cluster looking like the latest accepted page. Denys hands Claude Code an ArgoCD tool so a phone conversation can become a real deploy.",
+    analogy:
+      "A stage manager with the current script. Change the script, the set changes.",
+    context:
+      "One of the MCP tools, and the silent partner of the grocery-store Helm chart.",
+    excerpt: "GitHub Actions, ArgoCD, Woodpecker CI, and a self-hosted SearXNG",
+    related: ["gitops", "mcp"],
+  }),
+  t({
+    id: "ingress",
+    term: "ingress",
+    aliases: ["Ingress routing"],
+    gloss: "The front door of the cluster: which name goes to which room.",
+    explanation:
+      "Ingress is the rule sheet for incoming visits. Traefik reads the name you asked for (happy.something) and walks you to the right service. Without it, every program would need its own street door.",
+    analogy:
+      "The directory in a lobby. You say a name. The concierge points.",
+    context:
+      "Step two of ‘How it works’: traffic comes in through Tailscale, then ingress (Traefik) picks the room.",
+    excerpt: "Ingress routing: traffic routes through Traefik to the Happy Server service.",
+    related: ["traefik", "tailscale"],
+  }),
+  t({
+    id: "pat",
+    term: "personal access token",
+    aliases: ["Personal Access Token", "GitHub PAT", "PAT"],
+    gloss: "A password with a job description: this key may only do these few things.",
+    explanation:
+      "A personal access token is a spare key you mint for a program. You can limit which doors it opens and throw it away if it leaks. Denys gives Claude Code a GitHub token that only reaches the repos he chose.",
+    analogy:
+      "A hotel keycard coded for the gym and room 412 — not the penthouse, not the safe.",
+    context:
+      "The warning at the end of MCP tools: one workspace, one token, is convenient and a little sloppy.",
+    excerpt: "A single workspace is convenient. For stronger isolation, run one workspace per repository with its own GitHub PAT",
+    related: ["mcp", "yolo"],
+  }),
+  t({
+    id: "peer-to-peer",
+    term: "peer-to-peer",
+    aliases: ["peer-to-peer tunnel"],
+    gloss: "Two devices talking directly, like two cups and a string — no town square in the middle.",
+    explanation:
+      "Peer-to-peer means your phone and the cluster try to speak to each other without parking the conversation on someone else’s computer. Tailscale’s job is to set up that string, and to call a relay only if the string will not stretch.",
+    analogy:
+      "A tin-can telephone. The dispatcher is only called if the string snags on a tree.",
+    context:
+      "How the Happy app reaches a cluster that has no public front door.",
+    excerpt: "creating a secure peer-to-peer tunnel to your cluster",
+    related: ["tailscale", "wireguard"],
   }),
 ];
 

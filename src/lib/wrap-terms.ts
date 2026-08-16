@@ -2,7 +2,7 @@ import type { Article, Block, Term } from "@/lib/types";
 
 export type TextPart =
   | { type: "text"; value: string }
-  | { type: "term"; value: string; term: Term };
+  | { type: "term"; value: string; term: Term; first: boolean };
 
 function escapeRegExp(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -56,9 +56,10 @@ export function splitByTerms(
     const found =
       catalog.find((c) => c.needle.toLowerCase() === raw.toLowerCase()) ??
       catalog.find((c) => raw.toLowerCase().includes(c.needle.toLowerCase()));
-    if (found && !seen.has(found.term.id)) {
-      parts.push({ type: "term", value: raw, term: found.term });
-      seen.add(found.term.id);
+    if (found) {
+      const first = !seen.has(found.term.id);
+      if (first) seen.add(found.term.id);
+      parts.push({ type: "term", value: raw, term: found.term, first });
     } else {
       parts.push({ type: "text", value: raw });
     }

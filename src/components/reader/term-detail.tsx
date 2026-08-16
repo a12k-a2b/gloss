@@ -28,11 +28,15 @@ export function TermDetail({
   related,
   onBack,
   onOpenRelated,
+  kicker = "In this passage",
+  backLabel = "Words",
 }: {
   term: Term;
   related: Term[];
   onBack: () => void;
   onOpenRelated: (id: string) => void;
+  kicker?: string;
+  backLabel?: string;
 }) {
   const swipe = useSwipe({ onSwipeRight: onBack });
   const [drawing, setDrawing] = useState(false);
@@ -63,12 +67,12 @@ export function TermDetail({
           className="flex h-11 items-center gap-2 px-2 font-sans text-sm font-medium text-ink transition-transform duration-150 ease-out active:scale-[0.96]"
         >
           <ArrowLeft className="size-4" strokeWidth={1.75} />
-          Words
+          {backLabel}
         </button>
       </header>
 
       <div className="ink-scroll min-h-0 flex-1 px-5 py-5">
-        <p className="caps">In this passage</p>
+        <p className="caps">{kicker}</p>
         <h2 className="mt-1 font-serif text-2xl font-medium leading-tight tracking-display text-ink text-balance">
           {term.term}
         </h2>

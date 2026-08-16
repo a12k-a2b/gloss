@@ -4,6 +4,7 @@ import { GlossaryPane } from "@/components/reader/glossary-pane";
 import { FirstHint, ImportSheet, LibrarySheet } from "@/components/reader/overlays";
 import { Toolbar } from "@/components/reader/toolbar";
 import { cn } from "@/lib/cn";
+import { explainSpan } from "@/lib/teach";
 import { useCurrentArticle, useReader } from "@/store/reader";
 
 export function AppShell() {
@@ -16,6 +17,9 @@ export function AppShell() {
   const collapse = useReader((s) => s.collapse);
   const hydrate = useReader((s) => s.hydrate);
   const hydrated = useReader((s) => s.hydrated);
+  const ask = useReader((s) => s.ask);
+  const dismissAsk = useReader((s) => s.dismissAsk);
+  const completeAsk = useReader((s) => s.completeAsk);
 
   useEffect(() => {
     hydrate();
@@ -23,14 +27,38 @@ export function AppShell() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && expanded) {
+      if (e.key !== "Escape") return;
+      if (ask) {
+        e.preventDefault();
+        dismissAsk();
+        return;
+      }
+      if (expanded) {
         e.preventDefault();
         collapse();
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [expanded, collapse]);
+  }, [expanded, collapse, ask, dismissAsk]);
+
+  useEffect(() => {
+    if (!ask || ask.status !== "loading") return;
+    const requestId = ask.requestId;
+    let cancelled = false;
+    void explainSpan({
+      phrase: ask.text,
+      kind: ask.kind,
+      title: article.title,
+      surrounding: ask.surrounding,
+    }).then((result) => {
+      if (cancelled) return;
+      if (result.ok) completeAsk(requestId, result.term);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [ask?.requestId, ask?.status, article.title, completeAsk]);
 
   return (
     <div

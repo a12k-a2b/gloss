@@ -1,5 +1,7 @@
-import { analyzePassage } from "@/lib/ai";
+import { analyzePassage, explainSpan as explainSpanFn } from "@/lib/ai";
 import type { AnalysisResult } from "@/lib/ai";
+import { localExplain, type ExplainInput, type ExplainResult } from "@/lib/explain";
+import type { Term } from "@/lib/types";
 
 export type TeachResult =
   | { ok: true; analysis: AnalysisResult }
@@ -10,4 +12,40 @@ export async function teachPassage(
   text: string,
 ): Promise<TeachResult> {
   return analyzePassage({ data: { title, text } });
+}
+
+function slug(s: string) {
+  return (
+    s
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "")
+      .slice(0, 48) || "ask"
+  );
+}
+
+export async function explainSpan(input: ExplainInput): Promise<ExplainResult> {
+  try {
+    const result = await explainSpanFn({ data: input });
+    if (!result.ok) {
+      return { ok: true, term: localExplain(input) };
+    }
+    const raw = result.term;
+    const term: Term = {
+      id: `ask-${slug(input.phrase)}`,
+      term: raw.term,
+      aliases: raw.aliases ?? [],
+      gloss: raw.gloss,
+      explanation: raw.explanation,
+      analogy: raw.analogy,
+      context: raw.context,
+      excerpt: raw.excerpt,
+      related: raw.related ?? [],
+      diagram: raw.diagram,
+      source: "asked",
+    };
+    return { ok: true, term };
+  } catch {
+    return { ok: true, term: localExplain(input) };
+  }
 }

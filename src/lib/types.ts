@@ -41,6 +41,7 @@ export type Term = {
   excerpt: string;
   related: string[];
   diagram: DiagramSpec;
+  source?: "auto" | "asked";
 };
 
 export type Article = {
@@ -58,3 +59,4 @@ export type ThemeName = "paper" | "ink";
 export type ContrastName = "standard" | "high";
 export type TypeScale = 0 | 1 | 2 | 3;
 export type MobilePane = "read" | "words";
+export type AskKind = "word" | "phrase" | "sentence" | "paragraph";

@@ -175,6 +175,7 @@
   line-height: var(--leading-reading);
   color: var(--color-ink);
   text-wrap: pretty;
+  touch-action: manipulation;
 }
 
 .article-body p,
@@ -190,34 +191,55 @@
 }
 
 /* Jargon marks — ink underline, not a color chip. */
-button.term-mark {
+.ask-token {
   display: inline;
   margin: 0;
-  padding: 0 0.04em;
+  padding: 0;
   border: 0;
-  border-radius: 2px;
   background: transparent;
   color: inherit;
   font: inherit;
   line-height: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  border-radius: 2px;
+}
+
+.term-mark {
+  padding: 0 0.04em;
   text-decoration: underline;
   text-decoration-thickness: 1.5px;
   text-underline-offset: 0.18em;
   text-decoration-color: var(--color-ink);
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
 }
 
-button.term-mark[data-active="true"] {
+.term-echo {
+  text-decoration: none;
+}
+
+.term-mark[data-active="true"] {
   background: var(--color-ink);
   color: var(--color-paper);
   text-decoration: none;
   box-shadow: 0 0 0 2px var(--color-ink);
 }
 
-button.term-mark:focus-visible {
+.ask-token:focus-visible {
   outline: 2px solid var(--color-ink);
   outline-offset: 2px;
+}
+
+/* User-asked span — grayscale wash, distinct from the underline. */
+.ask-mark {
+  background: var(--color-mark-wash);
+  box-shadow: 0 0 0 3px var(--color-mark-wash);
+  text-decoration: none;
+  color: var(--color-ink);
+}
+
+.ask-pulse {
+  background: var(--color-mark-wash);
+  box-shadow: 0 0 0 2px var(--color-mark-wash);
 }
 
 /* Scrollbars: thin ink, no colorful overlay. */

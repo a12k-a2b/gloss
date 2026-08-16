@@ -1,3 +1,4 @@
+import { localExplain, type ExplainInput, type ExplainResult } from "./explain";
 import type { TeachResult } from "./teach";
 
 export async function teachPassage(
@@ -9,4 +10,8 @@ export async function teachPassage(
     error:
       "Teaching a new passage needs the online app. The two essays in the library work fully on this tablet.",
   };
+}
+
+export async function explainSpan(input: ExplainInput): Promise<ExplainResult> {
+  return { ok: true, term: localExplain(input) };
 }
