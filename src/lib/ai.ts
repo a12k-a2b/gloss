@@ -215,17 +215,6 @@ What it is: ${data.explanation.slice(0, 280)}
 ${data.context ? `How this essay uses it: ${data.context.slice(0, 180)}` : ""}
 ${data.caption ? `One-line figure caption (do not letter this on the drawing): ${data.caption}` : ""}`;
 }
-  return `A teaching figure for a grayscale reflective LCD (paper-white tablet).
-Black ink on cream paper only. No color, no watercolor, no photography, no 3D, no glossy UI mockup, no decorative scenery.
-Like a professor’s whiteboard or a field-guide diagram drawn in one pass.
-Show the MECHANISM as a short sequence: 2–5 labeled boxes or parts, arrows, one everyday metaphor drawn simply.
-Labels: 1–3 words. Thick confident lines. Lots of unused paper. Must still read when the whole image is gray.
-Concept: "${data.term}"
-Everyday picture: ${data.analogy}
-What it is: ${data.explanation.slice(0, 320)}
-${data.context ? `How this essay uses it: ${data.context.slice(0, 220)}` : ""}
-Do not write a title banner. Do not draw a banana. Do not add a logo.`;
-}
 
 function dataUrlFromBase64(data: string, mime = "image/png"): string {
   const clean = data.replace(/\s+/g, "");
