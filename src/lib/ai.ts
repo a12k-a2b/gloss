@@ -178,51 +178,104 @@ const illustrateInput = z.object({
   term: z.string(),
   analogy: z.string(),
   explanation: z.string(),
+  context: z.string().optional(),
 });
+
+function teachingFigurePrompt(data: {
+  term: string;
+  analogy: string;
+  explanation: string;
+  context?: string;
+}): string {
+  return `A teaching figure for a grayscale reflective LCD (paper-white tablet).
+Black ink on cream paper only. No color, no watercolor, no photography, no 3D, no glossy UI mockup, no decorative scenery.
+Like a professor’s whiteboard or a field-guide diagram drawn in one pass.
+Show the MECHANISM as a short sequence: 2–5 labeled boxes or parts, arrows, one everyday metaphor drawn simply.
+Labels: 1–3 words. Thick confident lines. Lots of unused paper. Must still read when the whole image is gray.
+Concept: "${data.term}"
+Everyday picture: ${data.analogy}
+What it is: ${data.explanation.slice(0, 320)}
+${data.context ? `How this essay uses it: ${data.context.slice(0, 220)}` : ""}
+Do not write a title banner. Do not draw a banana. Do not add a logo.`;
+}
+
+function dataUrlFromBase64(data: string, mime = "image/png"): string {
+  const clean = data.replace(/\s+/g, "");
+  return `data:${mime};base64,${clean}`;
+}
+
+async function drawWithNanoBanana(prompt: string): Promise<string | null> {
+  const key =
+    process.env.GEMINI_API_KEY ||
+    process.env.GOOGLE_API_KEY ||
+    process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+  if (!key) return null;
+
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-image:generateContent?key=${encodeURIComponent(key)}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      signal: AbortSignal.timeout(28000),
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          responseModalities: ["TEXT", "IMAGE"],
+          imageConfig: { aspectRatio: "4:3" },
+        },
+      }),
+    },
+  );
+  if (!res.ok) return null;
+  const body = (await res.json()) as {
+    candidates?: {
+      content?: { parts?: { inlineData?: { data?: string; mimeType?: string } }[] };
+    }[];
+  };
+  const part = body.candidates?.[0]?.content?.parts?.find((p) => p.inlineData?.data);
+  if (!part?.inlineData?.data) return null;
+  return dataUrlFromBase64(part.inlineData.data, part.inlineData.mimeType ?? "image/png");
+}
+
+async function drawWithGrok(prompt: string): Promise<string | null> {
+  const apiKey = process.env.XAI_API_KEY;
+  if (!apiKey) return null;
+  const res = await fetch("https://api.x.ai/v1/images/generations", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+    signal: AbortSignal.timeout(28000),
+    body: JSON.stringify({
+      model: "grok-imagine-image",
+      prompt,
+      n: 1,
+      aspect_ratio: "4:3",
+      response_format: "url",
+    }),
+  });
+  if (!res.ok) return null;
+  const body = (await res.json()) as { data?: { url?: string }[] };
+  return body.data?.[0]?.url ?? null;
+}
 
 export const illustrateTerm = createServerFn({ method: "POST" })
   .validator((input: unknown) => illustrateInput.parse(input))
   .handler(async ({ data }) => {
-    const apiKey = process.env.XAI_API_KEY;
-    if (!apiKey) {
+    const prompt = teachingFigurePrompt(data);
+    try {
+      const banana = await drawWithNanoBanana(prompt);
+      if (banana) return { ok: true as const, url: banana };
+      const grok = await drawWithGrok(prompt);
+      if (grok) return { ok: true as const, url: grok };
       return {
         ok: false as const,
-        error: "Illustration is unavailable here.",
+        error: "No illustrator key is set (Gemini or xAI).",
       };
+    } catch {
+      return { ok: false as const, error: "The board is busy. Try again in a moment." };
     }
-
-    const prompt = `A high-contrast pedagogical textbook figure drawn in black ink on cream paper. No color, no watercolor wash, no photorealism. Simple labeled line drawing that explains "${data.term}". Visual metaphor: ${data.analogy}. Keep labels to two or three short words. Generous white space, thick confident lines, the look of a figure from a well-printed field guide. ${data.explanation.slice(0, 280)}`;
-
-    const res = await fetch("https://api.x.ai/v1/images/generations", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: "grok-imagine-image",
-        prompt,
-        n: 1,
-        aspect_ratio: "4:3",
-        response_format: "url",
-      }),
-    });
-
-    if (!res.ok) {
-      return {
-        ok: false as const,
-        error: `Could not draw that (${res.status}).`,
-      };
-    }
-
-    const body = (await res.json()) as {
-      data?: { url?: string }[];
-    };
-    const url = body.data?.[0]?.url;
-    if (!url) {
-      return { ok: false as const, error: "The figure came back empty." };
-    }
-    return { ok: true as const, url };
   });
 
 const explainInput = z.object({

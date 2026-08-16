@@ -295,6 +295,36 @@
 .margin-row-clip {
   overflow: hidden;
 }
+
+.board-frame {
+  position: relative;
+  min-height: 9rem;
+  overflow: hidden;
+  background: var(--paper-sunken, color-mix(in srgb, currentColor 4%, transparent));
+}
+
+.board-wait {
+  padding: 2.5rem 1rem;
+  text-align: center;
+  font-family: var(--font-sans, sans-serif);
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint, #8a8680);
+}
+
+.board-figure {
+  display: block;
+  width: 100%;
+  height: auto;
+  animation: board-in 700ms ease both;
+  filter: grayscale(1) contrast(1.12);
+}
+
+@keyframes board-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
 [data-type="0"] .origin-host { zoom: 0.92; }
 [data-type="1"] .origin-host { zoom: 1; }
 [data-type="2"] .origin-host { zoom: 1.12; }

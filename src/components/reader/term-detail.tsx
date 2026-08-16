@@ -1,8 +1,8 @@
-import { useState, type ReactNode } from "react";
-import { ArrowLeft, Image as ImageIcon, LoaderCircle } from "lucide-react";
+import type { ReactNode } from "react";
+import { ArrowLeft } from "lucide-react";
+import { BoardFigure } from "@/components/reader/board-figure";
 import { InkDiagram } from "@/components/reader/ink-diagram";
 import { cn } from "@/lib/cn";
-import { drawTerm } from "@/lib/illustrate";
 import { useSwipe } from "@/hooks/use-swipe";
 import type { Term } from "@/lib/types";
 
@@ -39,24 +39,6 @@ export function TermDetail({
   backLabel?: string;
 }) {
   const swipe = useSwipe({ onSwipeRight: onBack });
-  const [drawing, setDrawing] = useState(false);
-  const [drawn, setDrawn] = useState<string | null>(null);
-  const [drawError, setDrawError] = useState<string | null>(null);
-
-  const handleDraw = async () => {
-    if (drawing) return;
-    setDrawing(true);
-    setDrawError(null);
-    try {
-      const result = await drawTerm(term.term, term.analogy, term.explanation);
-      if (result.ok) setDrawn(result.url);
-      else setDrawError(result.error);
-    } catch {
-      setDrawError("Could not reach the illustrator.");
-    } finally {
-      setDrawing(false);
-    }
-  };
 
   return (
     <div className="flex h-full min-h-0 flex-col" {...swipe}>
@@ -95,37 +77,8 @@ export function TermDetail({
         <Section kicker="What's going on">{term.explanation}</Section>
         <Section kicker="Why it's here">{term.context}</Section>
 
-        <section className="mb-6">
-          <p className="caps mb-2">Drawn</p>
-          {drawn ? (
-            <img
-              src={drawn}
-              alt={`Ink figure of ${term.term}`}
-              className="w-full rounded-md outline outline-1 -outline-offset-1 outline-ink/20"
-              crossOrigin="anonymous"
-            />
-          ) : (
-            <button
-              type="button"
-              onClick={handleDraw}
-              disabled={drawing}
-              className="hairline flex h-11 w-full items-center justify-center gap-2 rounded-md bg-paper-raised font-sans text-sm font-medium text-ink transition-transform duration-150 ease-out active:scale-[0.96] disabled:opacity-60"
-            >
-              {drawing ? (
-                <LoaderCircle className="size-4 animate-spin" strokeWidth={1.75} />
-              ) : (
-                <ImageIcon className="size-4" strokeWidth={1.75} />
-              )}
-              {drawing ? "Drawing a figure…" : "Draw this as a figure"}
-            </button>
-          )}
-          {drawError ? (
-            <p className="mt-2 font-sans text-sm text-ink-soft">{drawError}</p>
-          ) : null}
-        </section>
-
         {related.length > 0 ? (
-          <section className="mb-10">
+          <section className="mb-6">
             <p className="caps mb-2">See also</p>
             <ul className="flex flex-wrap gap-2">
               {related.map((r) => (
@@ -145,6 +98,8 @@ export function TermDetail({
             </ul>
           </section>
         ) : null}
+
+        <BoardFigure term={term} />
       </div>
     </div>
   );
