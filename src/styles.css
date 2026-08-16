@@ -263,6 +263,14 @@
 [data-type="2"] .origin-host { zoom: 1.12; }
 [data-type="3"] .origin-host { zoom: 1.24; }
 
+.margin-dim {
+  opacity: 0.38;
+}
+[data-type="0"] .origin-host { zoom: 0.92; }
+[data-type="1"] .origin-host { zoom: 1; }
+[data-type="2"] .origin-host { zoom: 1.12; }
+[data-type="3"] .origin-host { zoom: 1.24; }
+
 .caps {
   font-family: var(--font-sans);
   font-size: var(--text-micro);

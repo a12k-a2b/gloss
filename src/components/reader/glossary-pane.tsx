@@ -32,6 +32,8 @@ export function GlossaryPane({ article }: { article: Article }) {
   const ask = useReader((s) => s.ask);
   const extraMap = useReader((s) => s.extraTerms);
   const extra = extraMap[article.id] ?? EMPTY_TERMS;
+  const visibleIds = useReader((s) => s.visibleTermIds);
+  const visible = new Set(visibleIds);
 
   const asked = extra.filter((t) => t.source === "asked");
   const prepared = article.terms.filter((t) => t.source !== "asked");
@@ -52,7 +54,7 @@ export function GlossaryPane({ article }: { article: Article }) {
 
   return (
     <aside
-      className="relative flex h-full min-h-0 flex-col overflow-hidden bg-paper-raised"
+      className="relative flex h-full min-h-0 flex-col overflow-hidden bg-paper"
       aria-label="Margin"
     >
       {showingAsk ? (
@@ -66,18 +68,14 @@ export function GlossaryPane({ article }: { article: Article }) {
         />
       ) : (
         <>
-          <header className="gloss-margin-head shrink-0 border-b border-rule">
-            <p className="caps">{fieldKicker(article.field)}</p>
-            <p className="mt-1 font-sans text-sm text-ink-soft">
-              Underlined words are already taught. Tap one. Any other word: tap
-              twice. Tap again to take more of the sentence.
-            </p>
+          <header className="gloss-margin-head shrink-0">
+            <p className="caps text-ink-faint">{fieldKicker(article.field)}</p>
           </header>
           <div ref={listRef} className="gloss-margin-list ink-scroll min-h-0 flex-1">
             {asked.length > 0 ? (
-              <section className="mb-5">
-                <p className="caps px-1 mb-2">You asked</p>
-                <ul className="space-y-2">
+              <section className="mb-4">
+                <p className="caps px-1 mb-1 text-ink-faint">You asked</p>
+                <ul className="space-y-0.5">
                   {asked.map((term) => (
                     <li key={term.id}>
                       <TermCard
@@ -91,12 +89,13 @@ export function GlossaryPane({ article }: { article: Article }) {
                 </ul>
               </section>
             ) : null}
-            <ul className="space-y-2">
+            <ul className="space-y-0.5">
               {prepared.map((term) => (
                 <li key={term.id}>
                   <TermCard
                     term={term}
                     active={focusedTermId === term.id}
+                    dimmed={visible.size > 0 && !visible.has(term.id)}
                     onOpen={() => expandTerm(term.id)}
                     onFocus={() => focusTerm(term.id)}
                   />

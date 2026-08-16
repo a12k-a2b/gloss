@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { OriginArticle } from "@/components/reader/origin-article";
 import { cn } from "@/lib/cn";
 import { tokensFromParts, tokenize, padContains, type AskToken } from "@/lib/ask-select";
@@ -339,12 +339,15 @@ export function ArticlePane({ article }: { article: Article }) {
   const ask = useReader((s) => s.ask);
   const pulseToken = useReader((s) => s.pulseToken);
   const formatSaved = useReader((s) => s.formatSaved);
+  const setVisibleTerms = useReader((s) => s.setVisibleTerms);
+  const [skinTick, setSkinTick] = useState(0);
   const marked = useMemo(() => markArticle(article), [article]);
   const useOrigin = !!(formatSaved && article.origin);
 
   const onOriginReady = useCallback(
     (payload: { text: string; tokens: AskToken[]; root: ShadowRoot | null }) => {
       surfaces.set("origin:0", { text: payload.text, tokens: payload.tokens });
+      setSkinTick((n) => n + 1);
     },
     [],
   );
@@ -367,6 +370,37 @@ export function ArticlePane({ article }: { article: Article }) {
       el.scrollIntoView({ block: "center", behavior: "smooth" });
     }
   }, [focusedTermId, ask]);
+
+  useEffect(() => {
+    const host = scroller.current;
+    if (!host) return;
+    const shadow = host.querySelector(".origin-host")?.shadowRoot;
+    const marks = [
+      ...host.querySelectorAll<HTMLElement>("[data-term][data-first='true']"),
+      ...[...(shadow?.querySelectorAll<HTMLElement>("[data-term][data-first='true']") ?? [])],
+    ];
+    if (marks.length === 0) {
+      setVisibleTerms([]);
+      return;
+    }
+    const visible = new Set<string>();
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          const id = (entry.target as HTMLElement).dataset.term;
+          if (!id) continue;
+          if (entry.isIntersecting) visible.add(id);
+          else visible.delete(id);
+        }
+        setVisibleTerms([...visible]);
+      },
+      { root: host, rootMargin: "-8% 0px -22% 0px", threshold: 0 },
+    );
+    for (const mark of marks) io.observe(mark);
+    return () => {
+      io.disconnect();
+    };
+  }, [article.id, formatSaved, skinTick, setVisibleTerms]);
 
   const onPointerDown = (e: React.PointerEvent) => {
     if (e.pointerType === "mouse" && e.button !== 0) return;

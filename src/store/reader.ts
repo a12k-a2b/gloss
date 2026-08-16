@@ -101,6 +101,7 @@ type ReaderState = {
   formatSaved: boolean;
   ask: AskState | null;
   pulseToken: string | null;
+  visibleTermIds: string[];
   hydrate: () => void;
   setTheme: (theme: ThemeName) => void;
   setContrast: (contrast: ContrastName) => void;
@@ -127,6 +128,7 @@ type ReaderState = {
   completeAsk: (requestId: number, term: Term) => void;
   dismissAsk: () => void;
   setPulseToken: (id: string | null) => void;
+  setVisibleTerms: (ids: string[]) => void;
 };
 
 function persistSettings(partial: Partial<Settings>) {
@@ -173,6 +175,7 @@ export const useReader = create<ReaderState>((set, get) => ({
   formatSaved: true,
   ask: null,
   pulseToken: null,
+  visibleTermIds: [],
   hydrate: () => {
     const s = loadSettings();
     const custom = loadCustom();
@@ -214,6 +217,7 @@ export const useReader = create<ReaderState>((set, get) => ({
       mobilePane: "read",
       ask: null,
       pulseToken: null,
+      visibleTermIds: [],
     });
   },
   addArticle: (article) => {
@@ -372,6 +376,7 @@ export const useReader = create<ReaderState>((set, get) => ({
   },
   dismissAsk: () => set({ ask: null, pulseToken: null }),
   setPulseToken: (pulseToken) => set({ pulseToken }),
+  setVisibleTerms: (visibleTermIds) => set({ visibleTermIds }),
 }));
 
 function currentArticleFrom(state: {
