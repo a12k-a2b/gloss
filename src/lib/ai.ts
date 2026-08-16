@@ -89,6 +89,12 @@ EXCLUDE
 - Dates, cities, page furniture, "I", "we".
 - A word you already taught under a better multi-word name.
 
+THE UNIT IS THE THING
+- If the idea is two or more words, the term string MUST be those words together ("due process", "pull request", "private CA", "gradient descent"). Never emit the inner word as its own term.
+- If the passage writes an expansion and an acronym — "certificate authority (CA)" or "CA (certificate authority)" — the term is the expansion, and the acronym is an alias. One card. One underline on the first full unit.
+- If you would teach both "process" and "due process", keep only "due process" and put "process" in aliases only if the short word is used alone for the same idea.
+- Underline budget is scarce. 14–22 terms. Prefer a phrase over a lonely word. Prefer a concept over a brand.
+
 Prefer the first occurrence of the real unit. Prefer concepts over brand names, unless the brand is the concept (Kubernetes, CRISPR, Keynes).
 
 For software and AI writing (a common case on this reader): assume they have never opened a terminal and do not work on a software team. Still pick concepts (daemon, mesh, hostNetwork), not only product names.

@@ -2,6 +2,7 @@ import { analyzePassage, explainSpan as explainSpanFn } from "@/lib/ai";
 import type { AnalysisResult } from "@/lib/ai";
 import { localExplain, type ExplainInput, type ExplainResult } from "@/lib/explain";
 import { localAnalyze } from "@/lib/local-teach";
+import { refineTaughtTerms } from "@/lib/units";
 import type { Term } from "@/lib/types";
 
 export type TeachResult =
@@ -14,11 +15,23 @@ export async function teachPassage(
 ): Promise<TeachResult> {
   try {
     const result = await analyzePassage({ data: { title, text } });
-    if (result.ok) return result;
+    if (result.ok) {
+      return {
+        ok: true,
+        analysis: {
+          ...result.analysis,
+          terms: refineTaughtTerms(result.analysis.terms, text),
+        },
+      };
+    }
   } catch {
     /* fall through to the pocket teacher */
   }
-  return { ok: true, analysis: localAnalyze(title, text) };
+  const local = localAnalyze(title, text);
+  return {
+    ok: true,
+    analysis: { ...local, terms: refineTaughtTerms(local.terms, text) },
+  };
 }
 
 function slug(s: string) {

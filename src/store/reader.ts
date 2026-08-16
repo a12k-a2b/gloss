@@ -6,8 +6,10 @@ import {
   rangeForKind,
   textForRange,
   tokenize,
+  coveringRange,
   type AskToken,
 } from "@/lib/ask-select";
+import { snapUnit } from "@/lib/units";
 import type {
   Article,
   ContrastName,
@@ -270,17 +272,32 @@ export const useReader = create<ReaderState>((set, get) => ({
   applyAskTap: (input) => {
     const tokens = input.tokens ?? tokenize(input.fullText);
     const kind = kindFromTaps(input.tapCount);
-    const [tokenStart, tokenEnd] = rangeForKind(
+    let [tokenStart, tokenEnd] = rangeForKind(
       tokens,
       input.fullText,
       input.tokenIndex,
       kind,
     );
-    const text = textForRange(tokens, tokenStart, tokenEnd);
+    let text = textForRange(tokens, tokenStart, tokenEnd);
     if (!text) return;
     const surrounding = (input.surrounding ?? input.fullText).slice(0, 900);
     const article = currentArticleFrom(get());
-    const existing = kind === "word" ? matchExisting(article.terms, text) : undefined;
+    if (kind === "word") {
+      const snap = snapUnit(text, surrounding, article.terms);
+      if (snap.text !== text) {
+        const at = input.fullText.toLowerCase().indexOf(snap.text.toLowerCase());
+        if (at >= 0) {
+          const cover = coveringRange(tokens, at, at + snap.text.length);
+          tokenStart = cover[0];
+          tokenEnd = cover[1];
+        }
+        text = snap.text;
+      }
+    }
+    const existing =
+      kind === "word" || kind === "phrase"
+        ? matchExisting(article.terms, text)
+        : undefined;
     const requestId = askSeq++;
     if (existing) {
       set({

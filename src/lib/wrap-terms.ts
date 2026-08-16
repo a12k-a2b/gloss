@@ -53,9 +53,9 @@ export function splitByTerms(
     if (start > last) {
       parts.push({ type: "text", value: text.slice(last, start) });
     }
-    const found =
-      catalog.find((c) => c.needle.toLowerCase() === raw.toLowerCase()) ??
-      catalog.find((c) => raw.toLowerCase().includes(c.needle.toLowerCase()));
+    const found = catalog.find(
+      (c) => c.needle.toLowerCase() === raw.toLowerCase(),
+    );
     if (found) {
       const first = !seen.has(found.term.id);
       if (first) seen.add(found.term.id);
