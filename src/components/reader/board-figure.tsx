@@ -12,7 +12,7 @@ export function BoardFigure({ term }: { term: Term }) {
     let cancelled = false;
     setUrl(null);
     setStatus("drawing");
-    drawTerm(term.term, term.analogy, term.explanation, term.context)
+    drawTerm(term.term, term.analogy, term.explanation, term.context, term.diagram)
       .then((result) => {
         if (cancelled) return;
         if (result.ok) {
@@ -28,7 +28,7 @@ export function BoardFigure({ term }: { term: Term }) {
     return () => {
       cancelled = true;
     };
-  }, [term.id, term.term, term.analogy, term.explanation, term.context]);
+  }, [term.id, term.term, term.analogy, term.explanation, term.context, term.diagram]);
 
   if (status === "hidden") return null;
 
@@ -39,14 +39,19 @@ export function BoardFigure({ term }: { term: Term }) {
         {status === "ready" && url ? (
           <img
             src={url}
-            alt={`Whiteboard sketch of ${term.term}`}
+            alt={`Before-and-after sketch of ${term.term}`}
             className="board-figure"
             crossOrigin="anonymous"
           />
         ) : (
-          <p className="board-wait">Sketching a figure…</p>
+          <p className="board-wait">Drawing the before and after…</p>
         )}
       </div>
+      {status === "ready" && term.diagram?.caption ? (
+        <p className="mt-2 font-serif text-sm italic leading-snug text-ink-soft text-pretty">
+          {term.diagram.caption}
+        </p>
+      ) : null}
     </section>
   );
 }

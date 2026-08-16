@@ -1,4 +1,5 @@
 import { illustrateTerm } from "@/lib/ai";
+import type { DiagramSpec } from "@/lib/types";
 
 export type DrawResult =
   | { ok: true; url: string }
@@ -6,8 +7,14 @@ export type DrawResult =
 
 const cache = new Map<string, string>();
 
-function keyOf(term: string, analogy: string): string {
-  return `${term.toLowerCase()}::${analogy.slice(0, 80)}`;
+function panelsFrom(diagram?: DiagramSpec, analogy = ""): string[] {
+  const nodes = diagram?.lanes?.[0]?.nodes ?? [];
+  const labels = nodes
+    .map((n) => n.label.replace(/\\n/g, " ").replace(/\s+/g, " ").trim())
+    .filter(Boolean);
+  if (labels.length >= 2) return labels.slice(0, 3);
+  if (labels.length === 1) return [labels[0], analogy || "what changes"];
+  return [];
 }
 
 export async function drawTerm(
@@ -15,12 +22,21 @@ export async function drawTerm(
   analogy: string,
   explanation: string,
   context = "",
+  diagram?: DiagramSpec,
 ): Promise<DrawResult> {
-  const key = keyOf(term, analogy);
+  const panels = panelsFrom(diagram, analogy);
+  const key = `${term.toLowerCase()}::${panels.join("|")}::${analogy.slice(0, 40)}`;
   const hit = cache.get(key);
   if (hit) return { ok: true, url: hit };
   const result = await illustrateTerm({
-    data: { term, analogy, explanation, context },
+    data: {
+      term,
+      analogy,
+      explanation,
+      context,
+      panels,
+      caption: diagram?.caption,
+    },
   });
   if (result.ok) cache.set(key, result.url);
   return result;

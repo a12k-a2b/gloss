@@ -179,6 +179,8 @@ const illustrateInput = z.object({
   analogy: z.string(),
   explanation: z.string(),
   context: z.string().optional(),
+  panels: z.array(z.string()).max(4).optional(),
+  caption: z.string().optional(),
 });
 
 function teachingFigurePrompt(data: {
@@ -186,7 +188,33 @@ function teachingFigurePrompt(data: {
   analogy: string;
   explanation: string;
   context?: string;
+  panels?: string[];
+  caption?: string;
 }): string {
+  const panels = (data.panels ?? []).map((p) => p.replace(/\s+/g, " ").trim()).filter(Boolean);
+  const strip =
+    panels.length >= 3
+      ? `Exactly THREE panels in a row, left to right, like a textbook strip.
+Panel 1 (left): ${panels[0]}
+Panel 2 (middle): ${panels[1]}
+Panel 3 (right): ${panels[2]}
+A small arrow between each panel.`
+      : `Exactly TWO panels, side by side, like a professor’s before/after on a whiteboard.
+LEFT panel (“before”): ${panels[0] || `the everyday situation without ${data.term}`}
+RIGHT panel (“after”): ${panels[1] || data.analogy}
+A single arrow in the gutter from left to right, labeled “then” if anything.`;
+
+  return `A teaching figure for a grayscale reflective LCD (paper-white tablet).
+Black ink on cream paper only. No color, no watercolor, no photography, no 3D, no glossy UI, no decorative scenery, no title banner, no logo, no banana.
+${strip}
+Each panel is a simple scene or mechanism, not a wall of text. Labels: 1–3 words, hand-lettered, large.
+Thick confident lines. Lots of unused paper. Must still read when the whole image is gray.
+Concept: "${data.term}"
+Everyday picture: ${data.analogy}
+What it is: ${data.explanation.slice(0, 280)}
+${data.context ? `How this essay uses it: ${data.context.slice(0, 180)}` : ""}
+${data.caption ? `One-line figure caption (do not letter this on the drawing): ${data.caption}` : ""}`;
+}
   return `A teaching figure for a grayscale reflective LCD (paper-white tablet).
 Black ink on cream paper only. No color, no watercolor, no photography, no 3D, no glossy UI mockup, no decorative scenery.
 Like a professor’s whiteboard or a field-guide diagram drawn in one pass.
@@ -221,7 +249,7 @@ async function drawWithNanoBanana(prompt: string): Promise<string | null> {
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
           responseModalities: ["TEXT", "IMAGE"],
-          imageConfig: { aspectRatio: "4:3" },
+          imageConfig: { aspectRatio: "3:2" },
         },
       }),
     },
@@ -251,7 +279,7 @@ async function drawWithGrok(prompt: string): Promise<string | null> {
       model: "grok-imagine-image",
       prompt,
       n: 1,
-      aspect_ratio: "4:3",
+      aspect_ratio: "3:2",
       response_format: "url",
     }),
   });
