@@ -1,8 +1,17 @@
 import { useState, type ReactNode } from "react";
-import { LoaderCircle, Trash2, X } from "lucide-react";
+import { Trash2, X } from "lucide-react";
+import { BeaverWait } from "@/components/reader/beaver-wait";
 import { SEED_ARTICLES } from "@/data/articles";
 import { ingestUrl } from "@/lib/ingest";
 import { isOnline } from "@/lib/online";
+import { prewarmBoards } from "@/lib/illustrate";
+import {
+  downloadShelf,
+  mintShelfCode,
+  packLibrary,
+  unpackLibrary,
+  uploadShelf,
+} from "@/lib/shelf";
 import { flattenBlocks, parseImportedText } from "@/lib/parse-import";
 import { teachPassage } from "@/lib/teach";
 import { cn } from "@/lib/cn";
@@ -57,8 +66,70 @@ export function LibrarySheet() {
   const removeArticle = useReader((s) => s.removeArticle);
   const custom = useReader((s) => s.customArticles);
   const current = useCurrentArticle();
+  const shelfCode = useReader((s) => s.shelfCode);
+  const setShelfCode = useReader((s) => s.setShelfCode);
+  const mergeArticles = useReader((s) => s.mergeArticles);
+  const [join, setJoin] = useState("");
+  const [shelfNote, setShelfNote] = useState<string | null>(null);
 
   if (!open) return null;
+
+  const onExport = () => {
+    const blob = new Blob([packLibrary(custom)], { type: "application/json" });
+    const href = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = href;
+    a.download = "gloss-shelf.json";
+    a.click();
+    URL.revokeObjectURL(href);
+  };
+
+  const onImportFile = async (file: File) => {
+    try {
+      const articles = unpackLibrary(await file.text());
+      mergeArticles(articles);
+      setShelfNote(`Brought in ${articles.length} pieces.`);
+    } catch {
+      setShelfNote("That file was not a Gloss shelf.");
+    }
+  };
+
+  const onMakeShelf = async () => {
+    const code = shelfCode || mintShelfCode();
+    setShelfCode(code);
+    const res = await uploadShelf(code, custom);
+    setShelfNote(
+      res.ok
+        ? res.shared
+          ? `Shelf ${code} is up. Open Gloss on the other device and join this code.`
+          : `Saved here. The shared copy needs a GitHub token on the server — export a file in the meantime.`
+        : res.error,
+    );
+  };
+
+  const onJoin = async () => {
+    const code = join.trim();
+    if (!code) return;
+    const res = await downloadShelf(code);
+    if (!res.ok) {
+      setShelfNote(res.error);
+      return;
+    }
+    mergeArticles(res.articles);
+    setShelfCode(code.toUpperCase().replace(/[^A-Z0-9]/g, ""));
+    setShelfNote(`Joined ${code}. ${res.articles.length} pieces on this tablet now.`);
+  };
+
+  const onPull = async () => {
+    if (!shelfCode) return;
+    const res = await downloadShelf(shelfCode);
+    if (!res.ok) {
+      setShelfNote(res.error);
+      return;
+    }
+    mergeArticles(res.articles);
+    setShelfNote(`Pulled ${res.articles.length} pieces.`);
+  };
 
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center sm:items-center">
@@ -133,6 +204,64 @@ export function LibrarySheet() {
                 />
               ))}
             </ul>
+          </Section>
+
+          <Section title="This shelf">
+            <div className="space-y-3 px-5 pb-5">
+              <p className="font-serif text-sm leading-snug text-ink-soft">
+                One code, two devices. Clip on the phone, read in bed.
+              </p>
+              {shelfCode ? (
+                <button
+                  type="button"
+                  className="font-sans text-lg tracking-[0.2em] text-ink"
+                  onClick={() => {
+                    void navigator.clipboard?.writeText(shelfCode);
+                    setShelfNote("Code copied. Join it on the other device.");
+                  }}
+                >
+                  {shelfCode}
+                </button>
+              ) : null}
+              <div className="flex flex-wrap gap-2">
+                <button type="button" className="hairline h-10 rounded-md px-3 font-sans text-sm" onClick={() => void onMakeShelf()}>
+                  {shelfCode ? "Push this tablet" : "Make a shared shelf"}
+                </button>
+                {shelfCode ? (
+                  <button type="button" className="hairline h-10 rounded-md px-3 font-sans text-sm" onClick={() => void onPull()}>
+                    Pull
+                  </button>
+                ) : null}
+                <button type="button" className="hairline h-10 rounded-md px-3 font-sans text-sm" onClick={onExport}>
+                  Export a file
+                </button>
+                <label className="hairline flex h-10 cursor-pointer items-center rounded-md px-3 font-sans text-sm">
+                  Import a file
+                  <input
+                    type="file"
+                    accept="application/json,.json,.gloss"
+                    className="sr-only"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) void onImportFile(file);
+                    }}
+                  />
+                </label>
+              </div>
+              <div className="flex gap-2">
+                <input
+                  value={join}
+                  onChange={(e) => setJoin(e.target.value.toUpperCase())}
+                  placeholder="Join a code"
+                  data-allow-select
+                  className="h-10 min-w-0 flex-1 rounded-md border border-rule bg-paper px-3 font-sans text-sm tracking-[0.16em] outline-none"
+                />
+                <button type="button" className="hairline h-10 rounded-md px-3 font-sans text-sm" onClick={() => void onJoin()}>
+                  Join
+                </button>
+              </div>
+              {shelfNote ? <p className="font-serif text-sm text-ink-soft">{shelfNote}</p> : null}
+            </div>
           </Section>
 
           <div className="border-t border-rule px-5 py-4 font-serif text-sm leading-snug text-ink-soft">
@@ -228,10 +357,12 @@ export function ImportSheet() {
   const open = useReader((s) => s.importOpen);
   const setOpen = useReader((s) => s.setImportOpen);
   const addArticle = useReader((s) => s.addArticle);
+  const shelfCode = useReader((s) => s.shelfCode);
 
   const [url, setUrl] = useState("");
   const [raw, setRaw] = useState("");
-  const [busy, setBusy] = useState<"fetch" | "teach" | null>(null);
+  const [busy, setBusy] = useState<"fetch" | "teach" | "draw" | null>(null);
+  const [drawProgress, setDrawProgress] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   if (!open) return null;
@@ -292,9 +423,17 @@ export function ImportSheet() {
       terms,
     };
     addArticle(article);
+    if (isOnline() && article.terms.length) {
+      setBusy("draw");
+      await prewarmBoards(article.id, article.terms, (done, total) => {
+        setDrawProgress(`${done} of ${total}`);
+      });
+    }
+    if (shelfCode) void uploadShelf(shelfCode, useReader.getState().customArticles);
     setUrl("");
     setRaw("");
     setBusy(null);
+    setOpen(false);
   };
 
   const onBring = async () => {
@@ -317,6 +456,15 @@ export function ImportSheet() {
           return;
         }
         addArticle(brought.article);
+        if (isOnline() && brought.article.terms.length) {
+          setBusy("draw");
+          await prewarmBoards(brought.article.id, brought.article.terms, (done, total) => {
+            setDrawProgress(`${done} of ${total}`);
+          });
+        }
+        if (shelfCode) {
+          void uploadShelf(shelfCode, useReader.getState().customArticles);
+        }
         setUrl("");
         setRaw("");
         setBusy(null);
@@ -362,6 +510,19 @@ export function ImportSheet() {
           </button>
         </header>
         <div className="ink-scroll min-h-0 flex-1 space-y-4 px-4 py-4">
+          {busy ? (
+            <BeaverWait
+              line={
+                busy === "fetch"
+                  ? "Opening the page"
+                  : busy === "draw"
+                    ? "Drawing the boards"
+                    : "Teaching the jargon"
+              }
+              detail={busy === "draw" ? drawProgress : "The beaver is reading. This can take a minute."}
+            />
+          ) : (
+          <>
           <p className="font-serif text-md leading-reading text-ink-soft">
             Paste any public blog or article link — software, law, biology,
             economics, whatever you are teaching yourself. Gloss opens the
@@ -408,24 +569,20 @@ export function ImportSheet() {
             />
           </div>
           {error ? <p className="font-sans text-sm text-ink">{error}</p> : null}
+          </>
+          )}
         </div>
+        {busy ? null : (
         <footer className="border-t border-rule p-3">
           <button
             type="button"
-            disabled={!!busy}
             onClick={() => void onBring()}
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-md bg-ink font-sans text-sm font-medium text-paper transition-transform duration-150 ease-out active:scale-[0.96] disabled:opacity-60"
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-md bg-ink font-sans text-sm font-medium text-paper transition-transform duration-150 ease-out active:scale-[0.96]"
           >
-            {busy ? (
-              <LoaderCircle className="size-4 animate-spin" strokeWidth={1.75} />
-            ) : null}
-            {busy === "fetch"
-              ? "Opening the page…"
-              : busy === "teach"
-                ? "Teaching the jargon…"
-                : "Bring it in"}
+            Bring it in
           </button>
         </footer>
+        )}
       </div>
     </div>
   );

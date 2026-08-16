@@ -176,3 +176,23 @@ export function originLooksUseful(html: string): boolean {
   const media = (html.match(/<(img|video|picture|iframe)\b/gi) ?? []).length;
   return text.length > 200 || media > 0;
 }
+
+export function stripSrcset(html: string): string {
+  return html.replace(/\ssrcset=["'][^"']*["']/gi, " ");
+}
+
+export function collectMediaUrls(html: string, pageUrl: string): string[] {
+  const found: string[] = [];
+  const re = /\s(?:src|poster)=["']([^"']+)["']/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(html))) {
+    const value = m[1] ?? "";
+    if (!value || value.startsWith("data:") || value.startsWith("blob:")) continue;
+    found.push(absolutize(value, pageUrl));
+  }
+  return [...new Set(found)].slice(0, 20);
+}
+
+export function replaceMediaUrl(html: string, from: string, to: string): string {
+  return html.split(from).join(to);
+}

@@ -65,10 +65,12 @@ export async function drawTerm(
 export async function prewarmBoards(
   articleId: string,
   terms: { id: string; term: string; analogy: string; explanation: string; context: string; diagram?: DiagramSpec }[],
-  limit = 6,
+  onProgress?: (done: number, total: number) => void,
 ): Promise<void> {
   if (!isOnline()) return;
-  for (const t of terms.slice(0, limit)) {
+  const list = terms.filter((t) => t.term);
+  let done = 0;
+  for (const t of list) {
     if (!isOnline()) return;
     await drawTerm(
       t.term,
@@ -78,5 +80,7 @@ export async function prewarmBoards(
       t.diagram,
       figureKey(articleId, t.id),
     ).catch(() => undefined);
+    done += 1;
+    onProgress?.(done, list.length);
   }
 }

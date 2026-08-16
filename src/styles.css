@@ -326,6 +326,54 @@
   to { opacity: 1; }
 }
 
+.beaver-wait {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.25rem 1.5rem;
+  text-align: center;
+}
+.beaver-wait-fig {
+  width: 11rem;
+  height: auto;
+  image-rendering: auto;
+  filter: grayscale(1) contrast(1.08);
+  animation: beaver-breathe 2.4s ease-in-out infinite;
+}
+.beaver-wait-word {
+  width: 9.5rem;
+  height: auto;
+  margin-top: 0.35rem;
+  filter: grayscale(1);
+  animation: beaver-word 1.6s ease-in-out infinite;
+}
+@keyframes beaver-breathe {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(3px); }
+}
+@keyframes beaver-word {
+  0%, 100% { opacity: 0.72; }
+  50% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .beaver-wait-fig,
+  .beaver-wait-word { animation: none; }
+}
+.beaver-wait-line {
+  margin-top: 0.85rem;
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  color: var(--color-ink);
+}
+.beaver-wait-detail {
+  margin-top: 0.25rem;
+  font-family: var(--font-serif);
+  font-size: 0.9rem;
+  font-style: italic;
+  color: var(--color-ink-soft);
+}
+
 .page-stage {
   overflow: hidden;
   perspective: 1800px;

@@ -38,7 +38,7 @@ if (!existsSync(join(root, "android", "app"))) {
 }
 run("npx cap sync android");
 
-const keystore = join(root, "android", "gloss.keystore");
+const keystore = join(root, "android", "app", "gloss.keystore");
 if (!existsSync(keystore)) {
   run(
     [
@@ -51,6 +51,7 @@ if (!existsSync(keystore)) {
     ].join(" "),
   );
 }
+process.env.GLOSS_KEYSTORE_PASSWORD = process.env.GLOSS_KEYSTORE_PASSWORD || "gloss-dc1";
 
 const apkOut = join(
   root,

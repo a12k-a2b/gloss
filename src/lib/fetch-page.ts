@@ -8,7 +8,12 @@ import {
   looksLikeChallenge,
 } from "@/lib/archive";
 import { extractFromHtml, extractFromMarkdown, type ExtractedPage } from "@/lib/extract-page";
-import { rewriteCssUrls } from "@/lib/origin-skin";
+import {
+  collectMediaUrls,
+  replaceMediaUrl,
+  rewriteCssUrls,
+  stripSrcset,
+} from "@/lib/origin-skin";
 
 const input = z.object({
   url: z.string().min(8).max(2000),
@@ -102,6 +107,44 @@ async function attachOriginCss(page: ExtractedPage): Promise<ExtractedPage> {
   return { ...page, origin: { ...page.origin, css } };
 }
 
+async function inlineOriginMedia(page: ExtractedPage): Promise<ExtractedPage> {
+  if (!page.origin) return page;
+  let html = stripSrcset(page.origin.html);
+  const urls = collectMediaUrls(html, page.url);
+  for (const href of urls) {
+    try {
+      const res = await fetch(href, {
+        method: "GET",
+        redirect: "follow",
+        signal: AbortSignal.timeout(8000),
+        headers: {
+          Accept: "image/*,video/mp4;q=0.8,*/*;q=0.1",
+          "User-Agent":
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Gloss/1.0",
+        },
+      });
+      if (!res.ok) continue;
+      const type = (res.headers.get("content-type") ?? "").split(";")[0];
+      if (!type.startsWith("image/") && type !== "video/mp4" && type !== "image/gif") {
+        continue;
+      }
+      const buf = await res.arrayBuffer();
+      if (buf.byteLength < 40 || buf.byteLength > 1_200_000) continue;
+      const data = `data:${type};base64,${Buffer.from(buf).toString("base64")}`;
+      html = replaceMediaUrl(html, href, data);
+      try {
+        const rel = href.replace(new URL(page.url).origin, "");
+        if (rel && rel !== href) html = replaceMediaUrl(html, rel, data);
+      } catch {
+        /* ignore */
+      }
+    } catch {
+      /* leave the remote src */
+    }
+  }
+  return { ...page, origin: { ...page.origin, html } };
+}
+
 function longerPage(a: ExtractedPage, b: ExtractedPage): ExtractedPage {
   return b.text.length > a.text.length ? b : a;
 }
@@ -118,7 +161,9 @@ export const fetchArticleFromUrl = createServerFn({ method: "POST" })
       if (first.type.includes("text/plain") || first.type.includes("markdown")) {
         page = extractFromMarkdown(first.body, first.finalUrl);
       } else {
-        page = await attachOriginCss(extractFromHtml(first.body, first.finalUrl));
+        page = await inlineOriginMedia(
+          await attachOriginCss(extractFromHtml(first.body, first.finalUrl)),
+        );
       }
 
       if (looksLikeChallenge(first.body)) {
@@ -128,8 +173,8 @@ export const fetchArticleFromUrl = createServerFn({ method: "POST" })
       if (!isArchiveUrl(safe.href) && looksGated(page, first.body)) {
         const snap = await fetchArchivedCopy(safe.href);
         if (snap) {
-          const archived = await attachOriginCss(
-            extractArchivedPage(snap.html, safe.href),
+          const archived = await inlineOriginMedia(
+            await attachOriginCss(extractArchivedPage(snap.html, safe.href)),
           );
           page = longerPage(page, archived);
         }

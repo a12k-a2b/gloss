@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
 import { extractSharedUrl, ingestUrl } from "@/lib/ingest";
+import { isOnline } from "@/lib/online";
+import { prewarmBoards } from "@/lib/illustrate";
+import { uploadShelf } from "@/lib/shelf";
 import { useReader } from "@/store/reader";
 
 type Toast = {
@@ -46,6 +49,11 @@ export function ShareInbox() {
         return;
       }
       addArticle(result.article);
+      if (isOnline()) {
+        void prewarmBoards(result.article.id, result.article.terms);
+        const code = useReader.getState().shelfCode;
+        if (code) void uploadShelf(code, useReader.getState().customArticles);
+      }
       setToast({ title: result.article.title, articleId: result.article.id });
       if (open) openArticle(result.article.id);
     };

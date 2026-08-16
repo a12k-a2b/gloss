@@ -33,6 +33,7 @@ type Settings = {
   formatSaved: boolean;
   marginFollow: boolean;
   paginate: boolean;
+  shelfCode: string;
 };
 
 export type AskState = {
@@ -59,6 +60,7 @@ function loadSettings(): Settings {
     formatSaved: true,
     marginFollow: true,
     paginate: false,
+    shelfCode: "",
   };
   if (typeof window === "undefined") return fallback;
   try {
@@ -114,6 +116,7 @@ type ReaderState = {
   formatSaved: boolean;
   marginFollow: boolean;
   paginate: boolean;
+  shelfCode: string;
   ask: AskState | null;
   pulseToken: string | null;
   visibleTermIds: string[];
@@ -125,6 +128,7 @@ type ReaderState = {
   setTypeScale: (typeScale: TypeScale) => void;
   openArticle: (id: string) => void;
   addArticle: (article: Article) => void;
+  mergeArticles: (articles: Article[]) => void;
   removeArticle: (id: string) => void;
   focusTerm: (id: string | null) => void;
   expandTerm: (id: string) => void;
@@ -135,6 +139,7 @@ type ReaderState = {
   setFormatSaved: (on: boolean) => void;
   setMarginFollow: (on: boolean) => void;
   setPaginate: (on: boolean) => void;
+  setShelfCode: (code: string) => void;
   dismissHint: () => void;
   applyAskTap: (input: {
     blockKey: string;
@@ -195,6 +200,7 @@ export const useReader = create<ReaderState>((set, get) => ({
   formatSaved: true,
   marginFollow: true,
   paginate: false,
+  shelfCode: "",
   ask: null,
   pulseToken: null,
   visibleTermIds: [],
@@ -282,6 +288,26 @@ export const useReader = create<ReaderState>((set, get) => ({
       ask: null,
     });
   },
+  mergeArticles: (incoming) => {
+    const have = new Map(get().customArticles.map((a) => [a.id, a]));
+    for (const a of incoming) have.set(a.id, a);
+    const next = [...have.values()].sort(
+      (a, b) => (b.addedAt ?? 0) - (a.addedAt ?? 0),
+    );
+    try {
+      localStorage.setItem(CUSTOM_KEY, JSON.stringify(next));
+    } catch {
+      try {
+        localStorage.setItem(
+          CUSTOM_KEY,
+          JSON.stringify(next.map((a) => ({ ...a, origin: undefined }))),
+        );
+      } catch {
+        /* quota */
+      }
+    }
+    set({ customArticles: next });
+  },
   removeArticle: (id) => {
     const next = get().customArticles.filter((a) => a.id !== id);
     try {
@@ -321,6 +347,10 @@ export const useReader = create<ReaderState>((set, get) => ({
   setPaginate: (paginate) => {
     persistSettings({ paginate });
     set({ paginate });
+  },
+  setShelfCode: (shelfCode) => {
+    persistSettings({ shelfCode });
+    set({ shelfCode });
   },
   dismissHint: () => {
     try {

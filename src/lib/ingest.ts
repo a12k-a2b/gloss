@@ -1,6 +1,5 @@
 import { bringPage } from "@/lib/bring";
 import { flattenBlocks } from "@/lib/parse-import";
-import { prewarmBoards } from "@/lib/illustrate";
 import { teachPassage } from "@/lib/teach";
 import type { Article, Term } from "@/lib/types";
 
@@ -60,20 +59,21 @@ export async function ingestUrl(
       source: "auto" as const,
     };
   });
-  const article: Article = {
-    id: `custom-${Date.now()}`,
-    title: taught.analysis.title || page.title,
-    dek: taught.analysis.dek || page.dek,
-    source: page.source,
-    minutes: Math.max(1, Math.round(flat.split(/\s+/).length / 220)),
-    custom: true,
-    url: page.url,
-    addedAt: Date.now(),
-    field: taught.analysis.field,
-    origin: page.origin,
-    blocks: page.blocks,
-    terms,
+  return {
+    ok: true,
+    article: {
+      id: `custom-${Date.now()}`,
+      title: taught.analysis.title || page.title,
+      dek: taught.analysis.dek || page.dek,
+      source: page.source,
+      minutes: Math.max(1, Math.round(flat.split(/\s+/).length / 220)),
+      custom: true,
+      url: page.url,
+      addedAt: Date.now(),
+      field: taught.analysis.field,
+      origin: page.origin,
+      blocks: page.blocks,
+      terms,
+    },
   };
-  void prewarmBoards(article.id, article.terms);
-  return { ok: true, article };
 }

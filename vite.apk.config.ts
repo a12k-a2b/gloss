@@ -9,6 +9,7 @@ const illustrateApk = fileURLToPath(
   new URL("./src/lib/illustrate.apk.ts", import.meta.url),
 );
 const fetchApk = fileURLToPath(new URL("./src/lib/fetch-page.apk.ts", import.meta.url));
+const shelfIoApk = fileURLToPath(new URL("./src/lib/shelf-io.apk.ts", import.meta.url));
 
 function apkStubs(): Plugin {
   return {
@@ -24,6 +25,9 @@ function apkStubs(): Plugin {
       }
       if (id === "@/lib/fetch-page" || /\/src\/lib\/fetch-page(\.ts)?$/.test(id)) {
         return fetchApk;
+      }
+      if (id === "@/lib/shelf-io" || /\/src\/lib\/shelf-io(\.ts)?$/.test(id)) {
+        return shelfIoApk;
       }
       return null;
     },
