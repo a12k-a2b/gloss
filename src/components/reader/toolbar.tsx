@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { BookCopy, BookOpen, Contrast, Library, ListFilter, Minus, Newspaper, Plus, SunMedium } from "lucide-react";
+import { BookCopy, BookOpen, Contrast, Library, ListFilter, Minus, Moon, Newspaper, Plus, SunMedium, SunMoon } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useCurrentArticle, useReader } from "@/store/reader";
 
@@ -36,9 +36,10 @@ export function Toolbar() {
   const article = useCurrentArticle();
   const typeScale = useReader((s) => s.typeScale);
   const theme = useReader((s) => s.theme);
+  const themePref = useReader((s) => s.themePref);
+  const cycleThemePref = useReader((s) => s.cycleThemePref);
   const contrast = useReader((s) => s.contrast);
   const setTypeScale = useReader((s) => s.setTypeScale);
-  const setTheme = useReader((s) => s.setTheme);
   const setContrast = useReader((s) => s.setContrast);
   const setLibraryOpen = useReader((s) => s.setLibraryOpen);
   const setImportOpen = useReader((s) => s.setImportOpen);
@@ -104,11 +105,23 @@ export function Toolbar() {
         <Plus className="size-4" strokeWidth={1.75} />
       </IconBtn>
       <IconBtn
-        label={theme === "paper" ? "Ink night page" : "Paper day page"}
-        pressed={theme === "ink"}
-        onClick={() => setTheme(theme === "paper" ? "ink" : "paper")}
+        label={
+          themePref === "system"
+            ? "Following day and night. Tap to lock ink."
+            : themePref === "ink"
+              ? "Ink locked. Tap for paper."
+              : "Paper locked. Tap to follow day and night."
+        }
+        pressed={themePref !== "system"}
+        onClick={() => cycleThemePref()}
       >
-        <SunMedium className="size-5" strokeWidth={1.6} />
+        {themePref === "system" ? (
+          <SunMoon className="size-5" strokeWidth={1.6} />
+        ) : theme === "ink" ? (
+          <Moon className="size-5" strokeWidth={1.6} />
+        ) : (
+          <SunMedium className="size-5" strokeWidth={1.6} />
+        )}
       </IconBtn>
       <IconBtn
         label={contrast === "high" ? "Standard contrast" : "High contrast"}

@@ -16,6 +16,7 @@ import type {
   MobilePane,
   Term,
   ThemeName,
+  ThemePref,
   TypeScale,
 } from "@/lib/types";
 
@@ -25,6 +26,7 @@ const ASKED_KEY = "gloss-asked-v1";
 
 type Settings = {
   theme: ThemeName;
+  themePref: ThemePref;
   contrast: ContrastName;
   typeScale: TypeScale;
   articleId: string;
@@ -50,6 +52,7 @@ export type AskState = {
 function loadSettings(): Settings {
   const fallback: Settings = {
     theme: "paper",
+    themePref: "system",
     contrast: "standard",
     typeScale: 1,
     articleId: SEED_ARTICLES[0].id,
@@ -61,7 +64,12 @@ function loadSettings(): Settings {
   try {
     const raw = localStorage.getItem(SETTINGS_KEY);
     if (!raw) return fallback;
-    return { ...fallback, ...JSON.parse(raw) };
+    const saved = JSON.parse(raw) as Partial<Settings>;
+    const parsed = { ...fallback, ...saved };
+    if (saved.themePref == null && saved.theme === "ink") {
+      parsed.themePref = "ink";
+    }
+    return parsed;
   } catch {
     return fallback;
   }
@@ -90,6 +98,7 @@ function loadAsked(): Record<string, Term[]> {
 type ReaderState = {
   hydrated: boolean;
   theme: ThemeName;
+  themePref: ThemePref;
   contrast: ContrastName;
   typeScale: TypeScale;
   articleId: string;
@@ -110,6 +119,8 @@ type ReaderState = {
   visibleTermIds: string[];
   hydrate: () => void;
   setTheme: (theme: ThemeName) => void;
+  setThemePref: (pref: ThemePref) => void;
+  cycleThemePref: () => void;
   setContrast: (contrast: ContrastName) => void;
   setTypeScale: (typeScale: TypeScale) => void;
   openArticle: (id: string) => void;
@@ -168,6 +179,7 @@ function matchExisting(terms: Term[], phrase: string): Term | undefined {
 export const useReader = create<ReaderState>((set, get) => ({
   hydrated: false,
   theme: "paper",
+  themePref: "system",
   contrast: "standard",
   typeScale: 1,
   articleId: SEED_ARTICLES[0].id,
@@ -205,8 +217,19 @@ export const useReader = create<ReaderState>((set, get) => ({
     });
   },
   setTheme: (theme) => {
-    persistSettings({ theme });
-    set({ theme });
+    persistSettings({ theme, themePref: theme });
+    set({ theme, themePref: theme });
+  },
+  setThemePref: (themePref) => {
+    persistSettings({ themePref });
+    set({ themePref });
+  },
+  cycleThemePref: () => {
+    const cur = get().themePref;
+    const next: ThemePref =
+      cur === "system" ? "ink" : cur === "ink" ? "paper" : "system";
+    persistSettings({ themePref: next, theme: next === "system" ? get().theme : next });
+    set({ themePref: next, theme: next === "system" ? get().theme : next });
   },
   setContrast: (contrast) => {
     persistSettings({ contrast });

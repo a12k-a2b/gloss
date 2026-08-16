@@ -62,6 +62,7 @@ export type Article = {
 };
 
 export type ThemeName = "paper" | "ink";
+export type ThemePref = "system" | ThemeName;
 export type ContrastName = "standard" | "high";
 export type TypeScale = 0 | 1 | 2 | 3;
 export type MobilePane = "read" | "words";

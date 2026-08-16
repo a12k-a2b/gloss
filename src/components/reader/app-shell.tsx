@@ -5,6 +5,7 @@ import { NativeMenuShield } from "@/components/reader/native-shield";
 import { FirstHint, ImportSheet, LibrarySheet } from "@/components/reader/overlays";
 import { ShareInbox } from "@/components/reader/share-inbox";
 import { Toolbar } from "@/components/reader/toolbar";
+import { useSystemTheme } from "@/hooks/use-system-theme";
 import { explainSpan } from "@/lib/teach";
 import { useCurrentArticle, useReader } from "@/store/reader";
 
@@ -20,6 +21,7 @@ export function AppShell() {
   const ask = useReader((s) => s.ask);
   const dismissAsk = useReader((s) => s.dismissAsk);
   const completeAsk = useReader((s) => s.completeAsk);
+  useSystemTheme();
 
   useEffect(() => {
     hydrate();
