@@ -115,8 +115,9 @@ export function LibrarySheet() {
               <span className="font-sans text-sm font-medium text-ink">
                 Or pin this page.
               </span>{" "}
-              In Iroko, open the menu and choose Add to Home screen. Open Gloss
-              from the home screen next time. Same reader, still a web page.
+              In the browser on the tablet, open the menu and choose Add to
+              Home screen. Open Gloss from the home screen next time. Same
+              reader, still a web page.
             </p>
           </div>
           <a

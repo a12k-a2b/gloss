@@ -65,14 +65,14 @@ export function GlossaryPane({ article }: { article: Article }) {
         />
       ) : (
         <>
-          <header className="shrink-0 border-b border-rule px-5 py-3">
+          <header className="gloss-margin-head shrink-0 border-b border-rule">
             <p className="caps">In this passage</p>
             <p className="mt-1 font-sans text-sm text-ink-soft">
               Underlined words are already taught. Tap one. Any other word: tap
               twice. Tap again to take more of the sentence.
             </p>
           </header>
-          <div ref={listRef} className="ink-scroll min-h-0 flex-1 px-3 py-3">
+          <div ref={listRef} className="gloss-margin-list ink-scroll min-h-0 flex-1">
             {asked.length > 0 ? (
               <section className="mb-5">
                 <p className="caps px-1 mb-2">You asked</p>

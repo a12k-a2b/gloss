@@ -79,7 +79,7 @@ export function AppShell() {
       <NativeMenuShield />
       <Toolbar />
       <div className="relative min-h-0 flex-1">
-        <div className="grid h-full min-h-0 min-w-0 grid-cols-[minmax(0,1.22fr)_1px_minmax(0,0.78fr)]">
+        <div className="gloss-split">
           <div className="h-full min-h-0 min-w-0">
             <ArticlePane article={article} />
           </div>

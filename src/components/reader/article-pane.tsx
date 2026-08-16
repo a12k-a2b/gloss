@@ -449,7 +449,7 @@ export function ArticlePane({ article }: { article: Article }) {
         pointer.current = null;
       }}
     >
-      <article className="article-body mx-auto max-w-prose px-5 py-7 sm:px-8 sm:py-9">
+      <article className="article-body article-measure mx-auto">
         <p className="caps mb-3">
           {article.source}
           <span className="mx-2 text-rule-strong">·</span>

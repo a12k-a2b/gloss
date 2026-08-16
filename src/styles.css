@@ -214,6 +214,47 @@
   width: 1px;
 }
 
+/* Portrait is the home layout. Landscape just spends the extra width. */
+.gloss-split {
+  display: grid;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1.36fr) 1px minmax(17rem, 0.64fr);
+}
+
+.article-measure {
+  max-width: none;
+  padding: 1.75rem 1.5rem 2.5rem;
+}
+
+.gloss-margin-head {
+  padding: 0.75rem 1rem;
+}
+
+.gloss-margin-list {
+  padding: 0.75rem 0.65rem;
+}
+
+@media (orientation: landscape) {
+  .gloss-split {
+    grid-template-columns: minmax(0, 1.08fr) 1px minmax(22rem, 0.92fr);
+  }
+
+  .article-measure {
+    max-width: none;
+    padding: 2rem 2.25rem 3rem;
+  }
+
+  .gloss-margin-head {
+    padding: 1rem 1.35rem;
+  }
+
+  .gloss-margin-list {
+    padding: 1rem 1rem;
+  }
+}
+
 .caps {
   font-family: var(--font-sans);
   font-size: var(--text-micro);
