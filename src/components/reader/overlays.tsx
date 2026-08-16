@@ -12,6 +12,7 @@ import {
   unpackLibrary,
   uploadShelf,
 } from "@/lib/shelf";
+import { flattenBlocks, parseImportedText } from "@/lib/parse-import";
 import {
   formatLogForChat,
   loadImportLog,

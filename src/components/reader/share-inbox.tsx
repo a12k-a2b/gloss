@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { extractSharedUrl, ingestUrl } from "@/lib/ingest";
 import { recordImport } from "@/lib/import-log";
+import { isOnline } from "@/lib/online";
 import { prewarmBoards } from "@/lib/illustrate";
 import { uploadShelf } from "@/lib/shelf";
 import { useReader } from "@/store/reader";
