@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { BookCopy, BookOpen, Contrast, Library, ListFilter, Minus, Moon, Newspaper, Plus, SunMedium, SunMoon } from "lucide-react";
+import { OfflinePill } from "@/components/reader/offline-pill";
 import { cn } from "@/lib/cn";
 import { useCurrentArticle, useReader } from "@/store/reader";
 
@@ -64,6 +65,9 @@ export function Toolbar() {
         <p className="truncate text-center font-serif text-sm text-ink-soft">
           {article.title}
         </p>
+        <div className="flex justify-center">
+          <OfflinePill />
+        </div>
       </div>
 
       <div className="mx-1 h-5 w-px bg-rule" />

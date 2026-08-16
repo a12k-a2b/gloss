@@ -5,6 +5,7 @@ import { tokensFromParts, tokenize, padContains, type AskToken } from "@/lib/ask
 import { markArticle, type MarkedBlock, type TextPart } from "@/lib/wrap-terms";
 import type { Article } from "@/lib/types";
 import { usePageBreaks } from "@/hooks/use-page-breaks";
+import { loadPlace, savePlace } from "@/lib/place";
 import { collectVisibleTermIds } from "@/lib/visible-terms";
 import { useReader } from "@/store/reader";
 
@@ -359,9 +360,38 @@ export function ArticlePane({ article }: { article: Article }) {
   ]);
 
   useEffect(() => {
-    setPage(0);
+    const place = loadPlace(article.id);
+    setPage(place.page);
     setFlip(null);
     flipping.current = false;
+    const host = scroller.current;
+    if (host && !paginate) {
+      requestAnimationFrame(() => {
+        host.scrollTop = place.scroll;
+      });
+    }
+  }, [article.id, paginate]);
+
+  useEffect(() => {
+    if (paginate) savePlace(article.id, { scroll: 0, page });
+  }, [article.id, paginate, page]);
+
+  useEffect(() => {
+    const host = scroller.current;
+    if (!host || paginate) return;
+    let t: number | null = null;
+    const onScroll = () => {
+      if (t) window.clearTimeout(t);
+      t = window.setTimeout(
+        () => savePlace(article.id, { scroll: host.scrollTop, page: 0 }),
+        200,
+      );
+    };
+    host.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      host.removeEventListener("scroll", onScroll);
+      if (t) window.clearTimeout(t);
+    };
   }, [article.id, paginate]);
 
   useEffect(() => {

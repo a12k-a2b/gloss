@@ -2,6 +2,7 @@ import { useState, type ReactNode } from "react";
 import { LoaderCircle, Trash2, X } from "lucide-react";
 import { SEED_ARTICLES } from "@/data/articles";
 import { ingestUrl } from "@/lib/ingest";
+import { isOnline } from "@/lib/online";
 import { flattenBlocks, parseImportedText } from "@/lib/parse-import";
 import { teachPassage } from "@/lib/teach";
 import { cn } from "@/lib/cn";
@@ -304,6 +305,10 @@ export function ImportSheet() {
 
     try {
       if (href) {
+        if (!isOnline()) {
+          setError("A link needs a connection. Paste the words themselves and we can still teach them here.");
+          return;
+        }
         setBusy("fetch");
         const brought = await ingestUrl(href);
         if (!brought.ok) {

@@ -1,5 +1,5 @@
-/* Gloss offline pin — cache the shell so the two essays still open on a plane. */
-const CACHE = "gloss-v1";
+/* Gloss offline pin — shell + fonts so the library still opens on a plane. */
+const CACHE = "gloss-v2";
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -32,7 +32,6 @@ self.addEventListener("fetch", (event) => {
   if (req.method !== "GET") return;
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
-
   if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/_server")) {
     return;
   }

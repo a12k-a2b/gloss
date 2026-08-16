@@ -1,11 +1,13 @@
 import { illustrateTerm } from "@/lib/ai";
+import { figureKey, loadFigure, saveFigure } from "@/lib/figure-store";
+import { isOnline } from "@/lib/online";
 import type { DiagramSpec } from "@/lib/types";
 
 export type DrawResult =
   | { ok: true; url: string }
-  | { ok: false; error: string };
+  | { ok: false; error: string; offline?: boolean };
 
-const cache = new Map<string, string>();
+const memory = new Map<string, string>();
 
 function panelsFrom(diagram?: DiagramSpec, analogy = ""): string[] {
   const nodes = diagram?.lanes?.[0]?.nodes ?? [];
@@ -23,11 +25,26 @@ export async function drawTerm(
   explanation: string,
   context = "",
   diagram?: DiagramSpec,
+  persistKey?: string,
 ): Promise<DrawResult> {
-  const panels = panelsFrom(diagram, analogy);
-  const key = `${term.toLowerCase()}::${panels.join("|")}::${analogy.slice(0, 40)}`;
-  const hit = cache.get(key);
+  const memKey = persistKey ?? `${term.toLowerCase()}::${analogy.slice(0, 40)}`;
+  const hit = memory.get(memKey);
   if (hit) return { ok: true, url: hit };
+  if (persistKey) {
+    const stored = await loadFigure(persistKey);
+    if (stored) {
+      memory.set(memKey, stored);
+      return { ok: true, url: stored };
+    }
+  }
+  if (!isOnline()) {
+    return {
+      ok: false,
+      offline: true,
+      error: "Connect to draw this figure. The ink diagram above still works.",
+    };
+  }
+  const panels = panelsFrom(diagram, analogy);
   const result = await illustrateTerm({
     data: {
       term,
@@ -38,6 +55,28 @@ export async function drawTerm(
       caption: diagram?.caption,
     },
   });
-  if (result.ok) cache.set(key, result.url);
+  if (result.ok) {
+    memory.set(memKey, result.url);
+    if (persistKey) void saveFigure(persistKey, result.url);
+  }
   return result;
+}
+
+export async function prewarmBoards(
+  articleId: string,
+  terms: { id: string; term: string; analogy: string; explanation: string; context: string; diagram?: DiagramSpec }[],
+  limit = 6,
+): Promise<void> {
+  if (!isOnline()) return;
+  for (const t of terms.slice(0, limit)) {
+    if (!isOnline()) return;
+    await drawTerm(
+      t.term,
+      t.analogy,
+      t.explanation,
+      t.context,
+      t.diagram,
+      figureKey(articleId, t.id),
+    ).catch(() => undefined);
+  }
 }
