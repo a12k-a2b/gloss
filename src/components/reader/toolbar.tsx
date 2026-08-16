@@ -65,7 +65,7 @@ export function Toolbar() {
       <IconBtn label="Library" onClick={() => setLibraryOpen(true)}>
         <Library className="size-5" strokeWidth={1.6} />
       </IconBtn>
-      <IconBtn label="Open a passage" onClick={() => setImportOpen(true)}>
+      <IconBtn tour="import" label="Open a passage" onClick={() => setImportOpen(true)}>
         <BookOpen className="size-5" strokeWidth={1.6} />
       </IconBtn>
 
@@ -90,6 +90,7 @@ export function Toolbar() {
         </IconBtn>
       ) : null}
       <IconBtn
+        tour="pages"
         label={paginate ? "Scroll the page" : "Turn pages"}
         pressed={paginate}
         onClick={() => setPaginate(!paginate)}
@@ -97,6 +98,7 @@ export function Toolbar() {
         <BookCopy className="size-5" strokeWidth={1.6} />
       </IconBtn>
       <IconBtn
+        tour="filter"
         label={marginFollow ? "Show the whole glossary" : "Only words on this page"}
         pressed={marginFollow}
         onClick={() => setMarginFollow(!marginFollow)}
@@ -105,12 +107,14 @@ export function Toolbar() {
       </IconBtn>
 
       <IconBtn
+        tour="type-down"
         label="Smaller type"
         onClick={() => setTypeScale(Math.max(0, typeScale - 1) as 0 | 1 | 2 | 3)}
       >
         <Minus className="size-4" strokeWidth={1.75} />
       </IconBtn>
       <IconBtn
+        tour="type-up"
         label="Larger type"
         onClick={() => setTypeScale(Math.min(3, typeScale + 1) as 0 | 1 | 2 | 3)}
       >

@@ -557,7 +557,12 @@
 [data-tour-gate] .gloss-split {
   pointer-events: none;
 }
-[data-tour-gate="theme"] [data-tour="theme"] {
+[data-tour-gate="theme"] [data-tour="theme"],
+[data-tour-gate="pages"] [data-tour="pages"],
+[data-tour-gate="filter"] [data-tour="filter"],
+[data-tour-gate="type-up"] [data-tour="type-up"],
+[data-tour-gate="type-down"] [data-tour="type-down"],
+[data-tour-gate="import"] [data-tour="import"] {
   pointer-events: auto;
   outline: 2px solid var(--color-ink);
   outline-offset: 2px;

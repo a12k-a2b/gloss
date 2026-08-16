@@ -3,7 +3,38 @@ import { BeaverWait } from "@/components/reader/beaver-wait";
 import { SEED_ARTICLES } from "@/data/articles";
 import { useReader } from "@/store/reader";
 
-type Gate = "look" | "theme" | "article" | "glossary";
+type Gate =
+  | "look"
+  | "theme"
+  | "article"
+  | "glossary"
+  | "pages"
+  | "filter"
+  | "type-up"
+  | "type-down"
+  | "import";
+
+type Wait =
+  | "ink"
+  | "paper"
+  | "system"
+  | "word"
+  | "phrase"
+  | "sentence"
+  | "paragraph"
+  | "clear"
+  | "open"
+  | "close"
+  | "pages-on"
+  | "page-next"
+  | "page-first"
+  | "pages-off"
+  | "filter-all"
+  | "filter-page"
+  | "type-big"
+  | "type-normal"
+  | "import-open"
+  | "import-close";
 
 type Step = {
   kicker: string;
@@ -11,7 +42,7 @@ type Step = {
   beaver: string;
   gate: Gate;
   next?: string;
-  wait?: "ink" | "paper" | "system" | "word" | "phrase" | "sentence" | "paragraph" | "clear" | "open" | "close";
+  wait?: Wait;
 };
 
 const STEPS: Step[] = [
@@ -100,9 +131,79 @@ const STEPS: Step[] = [
     wait: "close",
   },
   {
+    kicker: "Turn pages",
+    title: "Tap the two-page icon in the bar — like an open book.",
+    beaver: "Some people like to flip. Some like to scroll. Try a flip.",
+    gate: "pages",
+    wait: "pages-on",
+  },
+  {
+    kicker: "Turn pages",
+    title: "On the essay: swipe left, or tap the right edge, to the next leaf.",
+    beaver: "The margin will follow this page, not the whole essay.",
+    gate: "article",
+    wait: "page-next",
+  },
+  {
+    kicker: "Turn pages",
+    title: "Swipe right, or tap the left edge, back to the first leaf.",
+    beaver: "Same hands as a paper book.",
+    gate: "article",
+    wait: "page-first",
+  },
+  {
+    kicker: "Turn pages",
+    title: "Tap the two-page icon again to go back to scrolling.",
+    beaver: "We’ll leave you on a long page. Flip is there if you miss it.",
+    gate: "pages",
+    wait: "pages-off",
+  },
+  {
+    kicker: "A quieter margin",
+    title: "Tap the filter (the list icon). The right column should grow.",
+    beaver: "That’s every taught word, even the ones off-screen. Useful. Louder.",
+    gate: "filter",
+    wait: "filter-all",
+  },
+  {
+    kicker: "A quieter margin",
+    title: "Tap it again. Only words on this page.",
+    beaver: "This is the default. Glanceable. We’ll leave it here.",
+    gate: "filter",
+    wait: "filter-page",
+  },
+  {
+    kicker: "Type",
+    title: "Tap the plus. Type should get larger.",
+    beaver: "The Daylight likes a big face. Try it.",
+    gate: "type-up",
+    wait: "type-big",
+  },
+  {
+    kicker: "Type",
+    title: "Tap the minus, back to where we were.",
+    beaver: "You can live wherever is comfortable.",
+    gate: "type-down",
+    wait: "type-normal",
+  },
+  {
+    kicker: "Your own pages",
+    title: "Tap the open-book icon — left of the title.",
+    beaver: "This is how a new essay comes in. Have a look. Don’t paste anything yet.",
+    gate: "import",
+    wait: "import-open",
+  },
+  {
+    kicker: "Your own pages",
+    title: "Close that sheet (the X, or the dim paper around it).",
+    beaver: "After this tour you can bring a real link. I’ll sit with the tea.",
+    gate: "look",
+    wait: "import-close",
+  },
+  {
     kicker: "You’re in",
-    title: "That’s the whole instrument. Bring your own pages when you want. For now, read.",
-    beaver: "If you forget, the library has “Meet the beaver again.” I’ll be here.",
+    title: "That’s the instrument. The Happy essay is waiting. Tap a word that feels like fog.",
+    beaver: "Library has “Meet the beaver again” if a friend wants a second pass.",
     gate: "look",
     next: "Start reading",
   },
@@ -115,20 +216,36 @@ const ASK_RANK: Record<string, number> = {
   paragraph: 4,
 };
 
-function matchesWait(
-  wait: Step["wait"],
-  themePref: string,
-  askKind: string | null,
-  expanded: boolean,
-): boolean {
+type Snap = {
+  themePref: string;
+  askKind: string | null;
+  expanded: boolean;
+  paginate: boolean;
+  page: number;
+  marginFollow: boolean;
+  typeScale: number;
+  importOpen: boolean;
+};
+
+function matchesWait(wait: Step["wait"], s: Snap): boolean {
   if (!wait) return false;
-  if (wait === "ink" || wait === "paper" || wait === "system") return themePref === wait;
+  if (wait === "ink" || wait === "paper" || wait === "system") return s.themePref === wait;
   if (wait in ASK_RANK) {
-    return (ASK_RANK[askKind ?? ""] ?? 0) >= ASK_RANK[wait];
+    return (ASK_RANK[s.askKind ?? ""] ?? 0) >= ASK_RANK[wait];
   }
-  if (wait === "clear") return !askKind && !expanded;
-  if (wait === "open") return expanded;
-  if (wait === "close") return !expanded && !askKind;
+  if (wait === "clear") return !s.askKind && !s.expanded;
+  if (wait === "open") return s.expanded;
+  if (wait === "close") return !s.expanded && !s.askKind;
+  if (wait === "pages-on") return s.paginate;
+  if (wait === "page-next") return s.paginate && s.page >= 1;
+  if (wait === "page-first") return s.paginate && s.page === 0;
+  if (wait === "pages-off") return !s.paginate;
+  if (wait === "filter-all") return !s.marginFollow;
+  if (wait === "filter-page") return s.marginFollow;
+  if (wait === "type-big") return s.typeScale >= 2;
+  if (wait === "type-normal") return s.typeScale <= 1;
+  if (wait === "import-open") return s.importOpen;
+  if (wait === "import-close") return !s.importOpen;
   return false;
 }
 
@@ -150,32 +267,75 @@ export function Onboarding() {
   const done = useReader((s) => s.onboarded);
   const finish = useReader((s) => s.finishOnboarding);
   const setThemePref = useReader((s) => s.setThemePref);
+  const setPaginate = useReader((s) => s.setPaginate);
+  const setMarginFollow = useReader((s) => s.setMarginFollow);
+  const setTypeScale = useReader((s) => s.setTypeScale);
   const openArticle = useReader((s) => s.openArticle);
   const collapse = useReader((s) => s.collapse);
   const dismissAsk = useReader((s) => s.dismissAsk);
   const themePref = useReader((s) => s.themePref);
   const ask = useReader((s) => s.ask);
   const expanded = useReader((s) => s.expanded);
+  const paginate = useReader((s) => s.paginate);
+  const tourPage = useReader((s) => s.tourPage);
+  const marginFollow = useReader((s) => s.marginFollow);
+  const typeScale = useReader((s) => s.typeScale);
+  const importOpen = useReader((s) => s.importOpen);
   const step = useReader((s) => s.tourStep);
   const setTourStep = useReader((s) => s.setTourStep);
 
   useEffect(() => {
     if (!hydrated || done) return;
     setThemePref("system");
+    setPaginate(false);
+    setMarginFollow(true);
+    setTypeScale(1);
     openArticle(SEED_ARTICLES[0].id);
     collapse();
     dismissAsk();
-  }, [hydrated, done, setThemePref, openArticle, collapse, dismissAsk]);
+  }, [
+    hydrated,
+    done,
+    setThemePref,
+    setPaginate,
+    setMarginFollow,
+    setTypeScale,
+    openArticle,
+    collapse,
+    dismissAsk,
+  ]);
 
   useEffect(() => {
     if (done) return;
     const card = STEPS[step];
     if (!card?.wait) return;
-    if (matchesWait(card.wait, themePref, ask?.kind ?? null, expanded)) {
+    const snap: Snap = {
+      themePref,
+      askKind: ask?.kind ?? null,
+      expanded,
+      paginate,
+      page: tourPage,
+      marginFollow,
+      typeScale,
+      importOpen,
+    };
+    if (matchesWait(card.wait, snap)) {
       const t = window.setTimeout(() => setTourStep(step + 1), 280);
       return () => window.clearTimeout(t);
     }
-  }, [done, step, themePref, ask?.kind, expanded, setTourStep]);
+  }, [
+    done,
+    step,
+    themePref,
+    ask?.kind,
+    expanded,
+    paginate,
+    tourPage,
+    marginFollow,
+    typeScale,
+    importOpen,
+    setTourStep,
+  ]);
 
   if (!hydrated || done) return null;
 

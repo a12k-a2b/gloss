@@ -115,6 +115,7 @@ type ReaderState = {
   hintSeen: boolean;
   onboarded: boolean;
   tourStep: number;
+  tourPage: number;
   formatSaved: boolean;
   marginFollow: boolean;
   paginate: boolean;
@@ -146,6 +147,7 @@ type ReaderState = {
   finishOnboarding: () => void;
   replayOnboarding: () => void;
   setTourStep: (step: number) => void;
+  setTourPage: (page: number) => void;
   applyAskTap: (input: {
     blockKey: string;
     tokenIndex: number;
@@ -204,6 +206,7 @@ export const useReader = create<ReaderState>((set, get) => ({
   hintSeen: true,
   onboarded: false,
   tourStep: 0,
+  tourPage: 0,
   formatSaved: true,
   marginFollow: true,
   paginate: false,
@@ -377,7 +380,16 @@ export const useReader = create<ReaderState>((set, get) => ({
     } catch {
       /* ignore */
     }
-    set({ onboarded: true, hintSeen: true, tourStep: 0 });
+    set({
+      onboarded: true,
+      hintSeen: true,
+      tourStep: 0,
+      paginate: false,
+      marginFollow: true,
+      typeScale: 1,
+      themePref: "system",
+      importOpen: false,
+    });
   },
   replayOnboarding: () => {
     try {
@@ -392,12 +404,16 @@ export const useReader = create<ReaderState>((set, get) => ({
       importOpen: false,
       expanded: false,
       ask: null,
+      paginate: false,
+      marginFollow: true,
+      typeScale: 1,
       themePref: "system",
       articleId: SEED_ARTICLES[0].id,
       mobilePane: "read",
     });
   },
   setTourStep: (tourStep) => set({ tourStep }),
+  setTourPage: (tourPage) => set({ tourPage }),
   applyAskTap: (input) => {
     const tokens = input.tokens ?? tokenize(input.fullText);
     const kind = kindFromTaps(input.tapCount);

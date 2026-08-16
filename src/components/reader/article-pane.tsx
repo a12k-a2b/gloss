@@ -344,6 +344,7 @@ export function ArticlePane({ article }: { article: Article }) {
   const formatSaved = useReader((s) => s.formatSaved);
   const paginate = useReader((s) => s.paginate);
   const setVisibleTerms = useReader((s) => s.setVisibleTerms);
+  const setTourPage = useReader((s) => s.setTourPage);
   const [skinTick, setSkinTick] = useState(0);
   const [page, setPage] = useState(0);
   const [flip, setFlip] = useState<null | { dir: "next" | "prev"; html: string; from: number }>(
@@ -374,7 +375,8 @@ export function ArticlePane({ article }: { article: Article }) {
 
   useEffect(() => {
     if (paginate) savePlace(article.id, { scroll: 0, page });
-  }, [article.id, paginate, page]);
+    setTourPage(page);
+  }, [article.id, paginate, page, setTourPage]);
 
   useEffect(() => {
     const host = scroller.current;
