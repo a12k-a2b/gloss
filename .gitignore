@@ -1,0 +1,58 @@
+# deps & toolchains
+node_modules/
+.android-sdk/
+
+# build output
+dist/
+dist-apk/
+.output/
+.vercel/
+.nitro/
+.tanstack/
+artifacts/
+
+# android / capacitor
+android/app/build/
+android/app/release/
+android/.gradle/
+android/build/
+android/local.properties
+android/app/gloss.keystore
+android/captures/
+android/app/src/main/assets/public/
+android/*/build/
+*.apk
+*.aab
+*.ipa
+public/gloss.apk
+
+# env & secrets
+.env
+.env.*
+!.env.example
+
+# logs / os
+*.log
+.DS_Store
+Thumbs.db
+/tmp/
+
+# editor
+.idea/
+.vscode/
+*.swp
+
+# test / qa
+screenshots/
+coverage/
+playwright-report/
+test-results/
+
+# personal / workspace scaffolding
+attachments/
+AGENTS.md
+
+# grok workspace internals (not the app)
+.grok/
+.project_id
+.node_modules.lock
