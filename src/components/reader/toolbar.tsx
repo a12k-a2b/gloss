@@ -1,12 +1,5 @@
 import type { ReactNode } from "react";
-import {
-  BookOpen,
-  Contrast,
-  Library,
-  Minus,
-  Plus,
-  SunMedium,
-} from "lucide-react";
+import { BookOpen, Contrast, Library, Minus, Plus, SunMedium } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useCurrentArticle, useReader } from "@/store/reader";
 
@@ -49,8 +42,6 @@ export function Toolbar() {
   const setContrast = useReader((s) => s.setContrast);
   const setLibraryOpen = useReader((s) => s.setLibraryOpen);
   const setImportOpen = useReader((s) => s.setImportOpen);
-  const mobilePane = useReader((s) => s.mobilePane);
-  const setMobilePane = useReader((s) => s.setMobilePane);
 
   return (
     <header className="flex h-14 shrink-0 items-center gap-1 border-b border-rule bg-paper px-2">
@@ -61,32 +52,10 @@ export function Toolbar() {
         <BookOpen className="size-5" strokeWidth={1.6} />
       </IconBtn>
 
-      <div className="mx-2 hidden min-w-0 flex-1 lg:block">
+      <div className="mx-2 min-w-0 flex-1">
         <p className="truncate text-center font-serif text-sm text-ink-soft">
           {article.title}
         </p>
-      </div>
-      <div className="flex-1 lg:hidden" />
-
-      <div className="flex lg:hidden">
-        <IconBtn
-          label="Read"
-          pressed={mobilePane === "read"}
-          onClick={() => setMobilePane("read")}
-        >
-          <span className="font-sans text-meta font-medium tracking-caps uppercase">
-            Read
-          </span>
-        </IconBtn>
-        <IconBtn
-          label="Words"
-          pressed={mobilePane === "words"}
-          onClick={() => setMobilePane("words")}
-        >
-          <span className="font-sans text-meta font-medium tracking-caps uppercase">
-            Words
-          </span>
-        </IconBtn>
       </div>
 
       <div className="mx-1 h-5 w-px bg-rule" />

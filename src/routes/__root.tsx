@@ -16,7 +16,7 @@ export const Route = createRootRoute({
       {
         name: "viewport",
         content:
-          "width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5",
+          "width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no",
       },
       { title: "Gloss — a margin for hard words" },
       {
@@ -33,6 +33,7 @@ export const Route = createRootRoute({
         content: "default",
       },
       { name: "application-name", content: "Gloss" },
+      { name: "format-detection", content: "telephone=no" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },

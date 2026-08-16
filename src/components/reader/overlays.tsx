@@ -91,7 +91,7 @@ export function LibrarySheet() {
             </li>
           ))}
         </ul>
-        <footer className="border-t border-rule p-3">
+        <footer className="border-t border-rule p-4">
           <button
             type="button"
             onClick={() => {
@@ -102,12 +102,29 @@ export function LibrarySheet() {
           >
             Open a new passage
           </button>
+          <div className="mt-4 space-y-3 font-serif text-sm leading-snug text-ink-soft">
+            <p className="caps text-ink-faint">On the DC-1</p>
+            <p>
+              <span className="font-sans text-sm font-medium text-ink">
+                Install the app.
+              </span>{" "}
+              Download the file below, open it on the tablet, tap Install. That
+              is the cleanest way — no browser chrome, no long-press menu.
+            </p>
+            <p>
+              <span className="font-sans text-sm font-medium text-ink">
+                Or pin this page.
+              </span>{" "}
+              In Iroko, open the menu and choose Add to Home screen. Open Gloss
+              from the home screen next time. Same reader, still a web page.
+            </p>
+          </div>
           <a
             href="/gloss.apk"
             download="gloss.apk"
-            className="mt-2 flex h-11 w-full items-center justify-center font-sans text-sm font-medium text-ink-soft underline decoration-1 underline-offset-2"
+            className="mt-3 flex h-11 w-full items-center justify-center font-sans text-sm font-medium text-ink underline decoration-1 underline-offset-2"
           >
-            Install on a Daylight (Android APK)
+            Download Gloss for the DC-1
           </a>
         </footer>
       </div>
@@ -225,6 +242,7 @@ export function ImportSheet() {
             onChange={(e) => setRaw(e.target.value)}
             placeholder="Paste here…"
             rows={10}
+            data-allow-select
             className="w-full resize-y rounded-md border border-rule bg-paper px-3 py-3 font-serif text-md leading-reading text-ink outline-none focus-visible:border-ink"
           />
           {error ? (
@@ -255,8 +273,8 @@ export function FirstHint() {
   const hydrated = useReader((s) => s.hydrated);
   if (!hydrated || seen) return null;
   return (
-    <div className="pointer-events-none absolute inset-x-0 bottom-16 z-20 flex justify-center px-4 lg:bottom-8 lg:left-auto lg:right-6 lg:w-[min(22rem,38vw)]">
-      <div className="pointer-events-auto hairline-strong w-full rounded-md bg-paper px-4 py-3">
+    <div className="pointer-events-none absolute inset-x-0 bottom-8 z-20 flex justify-end px-6">
+      <div className="pointer-events-auto hairline-strong w-[min(22rem,34vw)] rounded-md bg-paper px-4 py-3">
         <p className="font-serif text-md leading-snug text-ink">
           Underlined words already have a note — tap one. Any other word: tap
           twice. Tap again to take the phrase, the sentence, the paragraph. Tap

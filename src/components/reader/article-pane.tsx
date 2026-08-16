@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef } from "react";
-import { AskDock } from "@/components/reader/ask-dock";
 import { cn } from "@/lib/cn";
 import { tokensFromParts, tokenize, padContains, type AskToken } from "@/lib/ask-select";
 import { markArticle, type MarkedBlock, type TextPart } from "@/lib/wrap-terms";
@@ -480,9 +479,8 @@ export function ArticlePane({ article }: { article: Article }) {
             pulseToken={pulseToken}
           />
         ))}
-        <div className="h-24" />
+        <div className="h-16" />
       </article>
-      <AskDock />
     </section>
   );
 }
