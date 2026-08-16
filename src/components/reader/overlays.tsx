@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { LoaderCircle, Trash2, X } from "lucide-react";
 import { SEED_ARTICLES } from "@/data/articles";
-import { bringPage } from "@/lib/bring";
+import { ingestUrl } from "@/lib/ingest";
 import { flattenBlocks, parseImportedText } from "@/lib/parse-import";
 import { teachPassage } from "@/lib/teach";
 import { cn } from "@/lib/cn";
@@ -97,6 +97,7 @@ export function LibrarySheet() {
             </button>
             <p className="mt-2 font-serif text-sm text-ink-soft">
               Paste a blog link. Gloss reads it and fills the right column.
+            On this tablet you can also Share from Chrome to Gloss.
             </p>
           </div>
 
@@ -304,20 +305,17 @@ export function ImportSheet() {
     try {
       if (href) {
         setBusy("fetch");
-        const brought = await bringPage(href);
+        const brought = await ingestUrl(href);
         if (!brought.ok) {
           setError(brought.error);
           setBusy(null);
           return;
         }
-        await finish(
-          brought.page.title,
-          brought.page.dek,
-          brought.page.source,
-          brought.page.blocks,
-          brought.page.url,
-          brought.page.origin,
-        );
+        addArticle(brought.article);
+        setUrl("");
+        setRaw("");
+        setBusy(null);
+        setOpen(false);
         return;
       }
       if (raw.trim().length < 40) {

@@ -3,6 +3,7 @@ import { ArticlePane } from "@/components/reader/article-pane";
 import { GlossaryPane } from "@/components/reader/glossary-pane";
 import { NativeMenuShield } from "@/components/reader/native-shield";
 import { FirstHint, ImportSheet, LibrarySheet } from "@/components/reader/overlays";
+import { ShareInbox } from "@/components/reader/share-inbox";
 import { Toolbar } from "@/components/reader/toolbar";
 import { explainSpan } from "@/lib/teach";
 import { useCurrentArticle, useReader } from "@/store/reader";
@@ -93,6 +94,7 @@ export function AppShell() {
       </div>
       <LibrarySheet />
       <ImportSheet />
+      <ShareInbox />
     </div>
   );
 }
