@@ -46,6 +46,7 @@ export function TermDetail({
         <button
           type="button"
           onClick={onBack}
+          data-tour="back"
           className="flex h-11 items-center gap-2 px-2 font-sans text-sm font-medium text-ink transition-transform duration-150 ease-out active:scale-[0.96]"
         >
           <ArrowLeft className="size-4" strokeWidth={1.75} />

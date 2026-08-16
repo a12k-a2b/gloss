@@ -514,6 +514,67 @@
   font-style: italic;
   color: var(--color-ink-soft);
 }
+
+.tour-banner {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 30;
+  display: grid;
+  grid-template-columns: 7.5rem 1fr;
+  gap: 0.25rem 0.75rem;
+  align-items: end;
+  padding: 0.5rem 0.85rem 0.75rem;
+  background: var(--color-paper);
+  box-shadow: 0 -1px 0 var(--color-rule);
+  max-height: 42%;
+  overflow: auto;
+}
+.tour-banner-fig .beaver-wait {
+  padding: 0;
+}
+.tour-banner-fig .beaver-wait-fig {
+  width: 6.4rem;
+}
+.tour-title {
+  margin-top: 0.15rem;
+  font-family: var(--font-serif);
+  font-size: 1.15rem;
+  font-weight: 500;
+  line-height: 1.25;
+  text-wrap: balance;
+}
+.tour-wait {
+  margin-top: 0.35rem;
+  font-family: var(--font-serif);
+  font-size: 0.95rem;
+  font-style: italic;
+  color: var(--color-ink-soft);
+}
+
+[data-tour-gate] header,
+[data-tour-gate] .gloss-split {
+  pointer-events: none;
+}
+[data-tour-gate="theme"] [data-tour="theme"] {
+  pointer-events: auto;
+  outline: 2px solid var(--color-ink);
+  outline-offset: 2px;
+  background: var(--color-paper-sunken);
+}
+[data-tour-gate="article"] [data-tour="article"] {
+  pointer-events: auto;
+}
+[data-tour-gate="glossary"] [data-tour="glossary"],
+[data-tour-gate="glossary"] [data-tour="back"] {
+  pointer-events: auto;
+}
+[data-tour-gate] .tour-banner,
+[data-tour-gate] .tour-banner * {
+  pointer-events: auto;
+}
+
 @media (min-width: 720px) {
   .onboard-root {
     align-items: center;

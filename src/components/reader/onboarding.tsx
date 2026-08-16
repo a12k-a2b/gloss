@@ -1,258 +1,219 @@
-import { useRef, useState } from "react";
+import { useEffect } from "react";
 import { BeaverWait } from "@/components/reader/beaver-wait";
-import {
-  growHint,
-  kindFromTaps,
-  kindLabel,
-  rangeForKind,
-  tokenize,
-  type AskKind,
-} from "@/lib/ask-select";
+import { SEED_ARTICLES } from "@/data/articles";
 import { useReader } from "@/store/reader";
 
-const PRACTICE =
-  "GitOps is a way of running a cluster from a Git repository. Think of Git as the one notebook the whole kitchen reads from.";
+type Gate = "look" | "theme" | "article" | "glossary";
 
-const STEPS = [
+type Step = {
+  kicker: string;
+  title: string;
+  beaver: string;
+  gate: Gate;
+  next?: string;
+  wait?: "ink" | "paper" | "system" | "word" | "phrase" | "sentence" | "paragraph" | "clear" | "open" | "close";
+};
+
+const STEPS: Step[] = [
   {
-    kicker: "A friend of the margin",
-    title: "This is Gloss.",
-    body: "An essay on the left. A patient teacher on the right. Built for a paper screen — the Daylight — so you can read hard things without drowning in jargon.",
-    beaver: "I’ll keep the kettle on.",
+    kicker: "The beaver",
+    title: "This is Gloss. I’ll walk you through it — hands on, not a slideshow.",
+    beaver: "The kettle’s on. Tap Continue when you’re ready.",
+    gate: "look",
+    next: "Continue",
   },
   {
     kicker: "The spread",
-    title: "Read left. Glance right.",
-    body: "Underlined words already have a note. Tap one of those (once) and the right column opens the lesson. The list only shows what’s on this page, so it stays small enough to ignore.",
-    beaver: "I sit in the margin. I don’t grab your sleeve.",
+    title: "Essay on the left. Teacher on the right. That’s the whole room.",
+    beaver: "Ninety-five percent of your time stays on the left. Glance right when a word is fog.",
+    gate: "look",
+    next: "I see it",
   },
   {
-    kicker: "Ask for more",
-    title: "Tap twice. Then keep tapping.",
-    body: "A word we missed isn’t underlined. Tap it twice — that’s “what is that?” Tap a third time and we take the next few words (a phrase, or one idea). Fourth tap: the whole sentence. Fifth: the paragraph. Tap empty paper to put it away.",
-    beaver: "Try it on the sentence below. Start on GitOps.",
-    practice: true,
+    kicker: "Day and night",
+    title: "Tap the sun-and-moon, top right. The page should go ink-dark.",
+    beaver: "That’s night paper. Good for a dim room.",
+    gate: "theme",
+    wait: "ink",
   },
   {
-    kicker: "Your own reading",
-    title: "Bring a page.",
-    body: "The book icon up top. Paste any public link. I’ll fetch it, teach the jargon, and draw the boards. If a magazine is gated, we look for an archived copy. That’s when you see me with the tea.",
-    beaver: "A slow page is a long sip.",
+    kicker: "Day and night",
+    title: "Tap it again. Back to cream paper.",
+    beaver: "Day paper. The Daylight likes this in a window.",
+    gate: "theme",
+    wait: "paper",
   },
   {
-    kicker: "The little switches",
-    title: "You barely need these. They’re here.",
-    body: "Newspaper: the original publication’s type, or our quiet page. Two pages: flip like a book. Filter: only words on screen, or the whole list. Sun-and-moon: follow day and night, or lock ink / paper.",
-    beaver: "Default is fine. Fiddle later.",
+    kicker: "Day and night",
+    title: "Once more — so it follows the room again.",
+    beaver: "Auto. Light by day, ink at night. We’ll leave it there.",
+    gate: "theme",
+    wait: "system",
   },
   {
-    kicker: "Phone to bed",
-    title: "One shelf, two devices.",
-    body: "Library → make a shared shelf. You get a six-letter code. Join it on the other machine. Clip a link on your phone, Pull on the Daylight.",
-    beaver: "I’m already in the Happy essay. Go tap a word that feels like fog.",
+    kicker: "Ask a word",
+    title: "In the essay: pick a word that is not underlined. Tap it twice.",
+    beaver: "Once just wiggles it. Twice is “what is that?” The right column should start teaching.",
+    gate: "article",
+    wait: "word",
+  },
+  {
+    kicker: "Grow it",
+    title: "Same place — tap a third time. The highlight should take the next few words.",
+    beaver: "That’s the phrase. One idea, not one dictionary entry.",
+    gate: "article",
+    wait: "phrase",
+  },
+  {
+    kicker: "Grow it",
+    title: "Fourth tap. The whole sentence.",
+    beaver: "Sometimes the fog is the sentence, not the noun.",
+    gate: "article",
+    wait: "sentence",
+  },
+  {
+    kicker: "Grow it",
+    title: "Fifth tap. The whole paragraph.",
+    beaver: "That’s as wide as we go.",
+    gate: "article",
+    wait: "paragraph",
+  },
+  {
+    kicker: "Put it away",
+    title: "Tap empty paper in the essay — not the highlight.",
+    beaver: "Gone. That’s how you keep reading. No menu, no undo.",
+    gate: "article",
+    wait: "clear",
+  },
+  {
+    kicker: "A word we already know",
+    title: "Now tap an underlined word once.",
+    beaver: "Those already have a note. One tap opens the lesson on the right.",
+    gate: "article",
+    wait: "open",
+  },
+  {
+    kicker: "Back to the list",
+    title: "On the right, tap the back arrow (or swipe the column back).",
+    beaver: "You’re in the glossary again. The essay never left.",
+    gate: "glossary",
+    wait: "close",
+  },
+  {
+    kicker: "You’re in",
+    title: "That’s the whole instrument. Bring your own pages when you want. For now, read.",
+    beaver: "If you forget, the library has “Meet the beaver again.” I’ll be here.",
+    gate: "look",
+    next: "Start reading",
   },
 ];
 
-function TapPractice({
-  onKind,
-}: {
-  onKind: (kind: AskKind | null, taps: number) => void;
-}) {
-  const tokens = tokenize(PRACTICE);
-  const session = useRef<{ key: string; count: number; at: number } | null>(null);
-  const [taps, setTaps] = useState(0);
-  const [origin, setOrigin] = useState(0);
-  const [pulse, setPulse] = useState<number | null>(null);
-  const pulseTimer = useRef<number | null>(null);
+const ASK_RANK: Record<string, number> = {
+  word: 1,
+  phrase: 2,
+  sentence: 3,
+  paragraph: 4,
+};
 
-  const kind = taps >= 2 ? kindFromTaps(taps) : null;
-  const [from, to] = kind
-    ? rangeForKind(tokens, PRACTICE, origin, kind)
-    : [-1, -1];
+function matchesWait(
+  wait: Step["wait"],
+  themePref: string,
+  askKind: string | null,
+  expanded: boolean,
+): boolean {
+  if (!wait) return false;
+  if (wait === "ink" || wait === "paper" || wait === "system") return themePref === wait;
+  if (wait in ASK_RANK) {
+    return (ASK_RANK[askKind ?? ""] ?? 0) >= ASK_RANK[wait];
+  }
+  if (wait === "clear") return !askKind && !expanded;
+  if (wait === "open") return expanded;
+  if (wait === "close") return !expanded && !askKind;
+  return false;
+}
 
-  const onTapWord = (index: number) => {
-    if (taps >= 2 && index >= from && index <= to) {
-      const count = Math.min(taps + 1, 5);
-      setTaps(count);
-      onKind(kindFromTaps(count), count);
-      return;
-    }
-    const now = Date.now();
-    const same =
-      session.current &&
-      session.current.key === String(index) &&
-      now - session.current.at < 1100;
-    const count = same && session.current ? session.current.count + 1 : 1;
-    session.current = { key: String(index), count, at: now };
+export function currentTourGate(onboarded: boolean, step: number): Gate | null {
+  if (onboarded) return null;
+  return STEPS[step]?.gate ?? null;
+}
 
-    if (count === 1) {
-      setPulse(index);
-      if (pulseTimer.current) window.clearTimeout(pulseTimer.current);
-      pulseTimer.current = window.setTimeout(() => {
-        setPulse(null);
-        if (session.current?.count === 1) session.current = null;
-      }, 700);
-      if (taps < 2) {
-        setTaps(0);
-        onKind(null, 1);
-      }
-      return;
-    }
-
-    setOrigin(index);
-    setTaps(Math.min(count, 5));
-    setPulse(null);
-    onKind(kindFromTaps(Math.min(count, 5)), Math.min(count, 5));
-  };
-
-  const clear = () => {
-    session.current = null;
-    setTaps(0);
-    setPulse(null);
-    onKind(null, 0);
-  };
-
-  return (
-    <div className="onboard-practice">
-      <p className="caps">Try it</p>
-      <p
-        className="onboard-practice-text"
-        onClick={(e) => {
-          if (!(e.target instanceof HTMLElement) || !e.target.dataset.tok) {
-            clear();
-          }
-        }}
-      >
-        {tokens.map((t) =>
-          t.isWord ? (
-            <button
-              key={t.index}
-              type="button"
-              data-tok={t.index}
-              className={
-                t.index >= from && t.index <= to
-                  ? "onboard-mark"
-                  : pulse === t.index
-                    ? "onboard-pulse"
-                    : ""
-              }
-              onClick={(e) => {
-                e.stopPropagation();
-                onTapWord(t.index);
-              }}
-            >
-              {t.text}
-            </button>
-          ) : (
-            <span key={t.index}>{t.text}</span>
-          ),
-        )}
-      </p>
-      <ol className="onboard-taps">
-        {[
-          [2, "word"],
-          [3, "phrase"],
-          [4, "sentence"],
-          [5, "paragraph"],
-        ].map(([n, label]) => (
-          <li key={n} className={taps === n ? "is-on" : taps > Number(n) ? "is-past" : ""}>
-            <span>{n}</span> {label}
-          </li>
-        ))}
-      </ol>
-      <p className="onboard-practice-hint">
-        {taps >= 2 && kind
-          ? `${kindLabel(kind)}. ${growHint(kind)}`
-          : taps === 1
-            ? "Once more on the same word — that asks."
-            : "Tap GitOps twice. Then keep tapping it."}
-      </p>
-    </div>
-  );
+export function currentTourWait(
+  onboarded: boolean,
+  step: number,
+): Step["wait"] | undefined {
+  if (onboarded) return;
+  return STEPS[step]?.wait;
 }
 
 export function Onboarding() {
   const hydrated = useReader((s) => s.hydrated);
   const done = useReader((s) => s.onboarded);
   const finish = useReader((s) => s.finishOnboarding);
-  const [step, setStep] = useState(0);
-  const [practiceLine, setPracticeLine] = useState<string | null>(null);
+  const setThemePref = useReader((s) => s.setThemePref);
+  const openArticle = useReader((s) => s.openArticle);
+  const collapse = useReader((s) => s.collapse);
+  const dismissAsk = useReader((s) => s.dismissAsk);
+  const themePref = useReader((s) => s.themePref);
+  const ask = useReader((s) => s.ask);
+  const expanded = useReader((s) => s.expanded);
+  const step = useReader((s) => s.tourStep);
+  const setTourStep = useReader((s) => s.setTourStep);
+
+  useEffect(() => {
+    if (!hydrated || done) return;
+    setThemePref("system");
+    openArticle(SEED_ARTICLES[0].id);
+    collapse();
+    dismissAsk();
+  }, [hydrated, done, setThemePref, openArticle, collapse, dismissAsk]);
+
+  useEffect(() => {
+    if (done) return;
+    const card = STEPS[step];
+    if (!card?.wait) return;
+    if (matchesWait(card.wait, themePref, ask?.kind ?? null, expanded)) {
+      const t = window.setTimeout(() => setTourStep(step + 1), 280);
+      return () => window.clearTimeout(t);
+    }
+  }, [done, step, themePref, ask?.kind, expanded, setTourStep]);
 
   if (!hydrated || done) return null;
 
-  const card = STEPS[step] ?? STEPS[0];
-  const last = step === STEPS.length - 1;
-  const beaver = practiceLine ?? card.beaver;
+  const card = STEPS[step] ?? STEPS[STEPS.length - 1];
+  const last = step >= STEPS.length - 1;
 
   return (
-    <div className="onboard-root">
-      <button
-        type="button"
-        aria-label="Skip"
-        className="onboard-scrim"
-        onClick={finish}
-      />
-      <div className="onboard-card" role="dialog" aria-labelledby="onboard-title">
-        <BeaverWait line={beaver} word={false} />
-        <p className="caps onboard-kicker">{card.kicker}</p>
-        <h2 id="onboard-title" className="onboard-title">
+    <div className="tour-banner" role="dialog" aria-labelledby="tour-title">
+      <div className="tour-banner-fig">
+        <BeaverWait line={card.beaver} word={false} />
+      </div>
+      <div className="tour-banner-copy">
+        <p className="caps">{card.kicker}</p>
+        <h2 id="tour-title" className="tour-title">
           {card.title}
         </h2>
-        <p className="onboard-body">{card.body}</p>
-        {card.practice ? (
-          <TapPractice
-            onKind={(kind, taps) => {
-              if (!kind) {
-                setPracticeLine(
-                  taps === 1
-                    ? "Good — once more, same word."
-                    : "Tap empty paper to put it away. Try GitOps twice.",
-                );
-                return;
+        {card.next ? (
+          <button
+            type="button"
+            className="onboard-next mt-3"
+            onClick={() => {
+              if (last) {
+                setThemePref("system");
+                collapse();
+                dismissAsk();
+                finish();
+              } else {
+                setTourStep(step + 1);
               }
-              if (kind === "word") setPracticeLine("That’s the word. Tap again for the phrase.");
-              else if (kind === "phrase") setPracticeLine("The idea, not just the word. Again for the sentence.");
-              else if (kind === "sentence") setPracticeLine("The whole sentence. Once more for the paragraph.");
-              else setPracticeLine("The whole paragraph. Tap empty paper to keep reading.");
             }}
-          />
-        ) : null}
-        <div className="onboard-dots" aria-hidden>
-          {STEPS.map((_, i) => (
-            <span key={i} className={i === step ? "is-on" : ""} />
-          ))}
-        </div>
-        <div className="onboard-actions">
-          <button type="button" className="onboard-skip" onClick={finish}>
-            Skip
+          >
+            {card.next}
           </button>
-          <div className="flex gap-2">
-            {step > 0 ? (
-              <button
-                type="button"
-                className="onboard-next onboard-back"
-                onClick={() => {
-                  setPracticeLine(null);
-                  setStep((n) => n - 1);
-                }}
-              >
-                Back
-              </button>
-            ) : null}
-            <button
-              type="button"
-              className="onboard-next"
-              onClick={() => {
-                setPracticeLine(null);
-                if (last) finish();
-                else setStep((n) => n + 1);
-              }}
-            >
-              {last ? "Start reading" : "Next"}
-            </button>
-          </div>
-        </div>
+        ) : (
+          <p className="tour-wait">Do that on the page. I’ll wait.</p>
+        )}
       </div>
     </div>
   );
 }
+

@@ -617,6 +617,7 @@ export function ArticlePane({ article }: { article: Article }) {
         paginate ? "page-stage" : "ink-scroll",
       )}
       aria-label="Passage"
+      data-tour="article"
       onPointerDown={onPointerDown}
       onPointerUp={onPointerUp}
       onPointerCancel={() => {

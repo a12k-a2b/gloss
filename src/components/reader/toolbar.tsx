@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { BookCopy, BookOpen, Contrast, Library, ListFilter, Minus, Moon, Newspaper, Plus, SunMedium, SunMoon } from "lucide-react";
 import { OfflinePill } from "@/components/reader/offline-pill";
+import { currentTourWait } from "@/components/reader/onboarding";
 import { cn } from "@/lib/cn";
 import { useCurrentArticle, useReader } from "@/store/reader";
 
@@ -9,11 +10,13 @@ function IconBtn({
   onClick,
   children,
   pressed,
+  tour,
 }: {
   label: string;
   onClick: () => void;
   children: ReactNode;
   pressed?: boolean;
+  tour?: string;
 }) {
   return (
     <button
@@ -21,6 +24,7 @@ function IconBtn({
       aria-label={label}
       title={label}
       aria-pressed={pressed}
+      data-tour={tour}
       onClick={onClick}
       className={cn(
         "flex size-11 items-center justify-center rounded-sm text-ink",
@@ -39,6 +43,10 @@ export function Toolbar() {
   const theme = useReader((s) => s.theme);
   const themePref = useReader((s) => s.themePref);
   const cycleThemePref = useReader((s) => s.cycleThemePref);
+  const setThemePref = useReader((s) => s.setThemePref);
+  const onboarded = useReader((s) => s.onboarded);
+  const tourStep = useReader((s) => s.tourStep);
+  const tourWait = currentTourWait(onboarded, tourStep);
   const contrast = useReader((s) => s.contrast);
   const setTypeScale = useReader((s) => s.setTypeScale);
   const setContrast = useReader((s) => s.setContrast);
@@ -109,6 +117,7 @@ export function Toolbar() {
         <Plus className="size-4" strokeWidth={1.75} />
       </IconBtn>
       <IconBtn
+        tour="theme"
         label={
           themePref === "system"
             ? "Following day and night. Tap to lock ink."
@@ -117,7 +126,13 @@ export function Toolbar() {
               : "Paper locked. Tap to follow day and night."
         }
         pressed={themePref !== "system"}
-        onClick={() => cycleThemePref()}
+        onClick={() => {
+          if (tourWait === "ink" || tourWait === "paper" || tourWait === "system") {
+            setThemePref(tourWait);
+            return;
+          }
+          cycleThemePref();
+        }}
       >
         {themePref === "system" ? (
           <SunMoon className="size-5" strokeWidth={1.6} />

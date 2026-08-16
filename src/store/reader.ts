@@ -114,6 +114,7 @@ type ReaderState = {
   importOpen: boolean;
   hintSeen: boolean;
   onboarded: boolean;
+  tourStep: number;
   formatSaved: boolean;
   marginFollow: boolean;
   paginate: boolean;
@@ -144,6 +145,7 @@ type ReaderState = {
   dismissHint: () => void;
   finishOnboarding: () => void;
   replayOnboarding: () => void;
+  setTourStep: (step: number) => void;
   applyAskTap: (input: {
     blockKey: string;
     tokenIndex: number;
@@ -201,6 +203,7 @@ export const useReader = create<ReaderState>((set, get) => ({
   importOpen: false,
   hintSeen: true,
   onboarded: false,
+  tourStep: 0,
   formatSaved: true,
   marginFollow: true,
   paginate: false,
@@ -216,7 +219,7 @@ export const useReader = create<ReaderState>((set, get) => ({
     let onboarded = false;
     try {
       hintSeen = localStorage.getItem("gloss-hint-v2") === "1";
-      onboarded = localStorage.getItem("gloss-onboard-v1") === "1";
+      onboarded = localStorage.getItem("gloss-onboard-v2") === "1";
     } catch {
       hintSeen = true;
     }
@@ -369,20 +372,32 @@ export const useReader = create<ReaderState>((set, get) => ({
   },
   finishOnboarding: () => {
     try {
+      localStorage.setItem("gloss-onboard-v2", "1");
       localStorage.setItem("gloss-onboard-v1", "1");
     } catch {
       /* ignore */
     }
-    set({ onboarded: true, hintSeen: true });
+    set({ onboarded: true, hintSeen: true, tourStep: 0 });
   },
   replayOnboarding: () => {
     try {
-      localStorage.removeItem("gloss-onboard-v1");
+      localStorage.removeItem("gloss-onboard-v2");
     } catch {
       /* ignore */
     }
-    set({ onboarded: false, libraryOpen: false });
+    set({
+      onboarded: false,
+      tourStep: 0,
+      libraryOpen: false,
+      importOpen: false,
+      expanded: false,
+      ask: null,
+      themePref: "system",
+      articleId: SEED_ARTICLES[0].id,
+      mobilePane: "read",
+    });
   },
+  setTourStep: (tourStep) => set({ tourStep }),
   applyAskTap: (input) => {
     const tokens = input.tokens ?? tokenize(input.fullText);
     const kind = kindFromTaps(input.tapCount);

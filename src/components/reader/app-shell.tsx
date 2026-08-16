@@ -3,7 +3,7 @@ import { ArticlePane } from "@/components/reader/article-pane";
 import { GlossaryPane } from "@/components/reader/glossary-pane";
 import { NativeMenuShield } from "@/components/reader/native-shield";
 import { ImportSheet, LibrarySheet } from "@/components/reader/overlays";
-import { Onboarding } from "@/components/reader/onboarding";
+import { Onboarding, currentTourGate } from "@/components/reader/onboarding";
 import { ShareInbox } from "@/components/reader/share-inbox";
 import { Toolbar } from "@/components/reader/toolbar";
 import { useSystemTheme } from "@/hooks/use-system-theme";
@@ -22,6 +22,9 @@ export function AppShell() {
   const ask = useReader((s) => s.ask);
   const dismissAsk = useReader((s) => s.dismissAsk);
   const completeAsk = useReader((s) => s.completeAsk);
+  const onboarded = useReader((s) => s.onboarded);
+  const tourStep = useReader((s) => s.tourStep);
+  const gate = currentTourGate(onboarded, tourStep);
   useSystemTheme();
 
   useEffect(() => {
@@ -68,6 +71,7 @@ export function AppShell() {
       data-theme={theme}
       data-contrast={contrast}
       data-type={String(typeScale)}
+      data-tour-gate={gate ?? undefined}
       className="flex h-dvh max-w-full flex-col overflow-hidden bg-paper text-ink pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]"
       onContextMenu={(e) => {
         const t = e.target;

@@ -62,6 +62,7 @@ export function GlossaryPane({ article }: { article: Article }) {
     <aside
       className="relative flex h-full min-h-0 flex-col overflow-hidden bg-paper"
       aria-label="Margin"
+      data-tour="glossary"
     >
       {showingAsk ? (
         <AskTeacherPane />
