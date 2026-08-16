@@ -51,7 +51,14 @@ export function isPaywallHost(host: string): boolean {
   return PAYWALL_HOST.some((p) => h === p || h.endsWith(`.${p}`));
 }
 
+export function looksLikeChallenge(html: string): boolean {
+  return /vercel security checkpoint|just a moment\.\.\.|cf-browser-verification|attention required|access denied|pardon our interruption/i.test(
+    html.slice(0, 8000),
+  );
+}
+
 export function looksGated(page: ExtractedPage, html = ""): boolean {
+  if (looksLikeChallenge(html)) return true;
   const text = page.text.replace(/\s+/g, " ").trim();
   if (text.length >= 5000) return false;
   if (PAYWALL_COPY.test(html) || PAYWALL_COPY.test(text)) return true;
@@ -103,21 +110,44 @@ function looksLikeSnapshot(html: string): boolean {
 export async function fetchArchivedCopy(
   originalUrl: string,
 ): Promise<{ html: string; snapshotUrl: string } | null> {
-  for (const host of ARCHIVE_HOSTS) {
-    const hit = await readMaybe(`https://${host}/newest/${originalUrl}`, 10000);
-    if (hit && looksLikeSnapshot(hit.body)) {
-      return { html: stripArchiveChrome(hit.body), snapshotUrl: hit.finalUrl };
-    }
-  }
+  const wayback = await fetchWaybackSnapshot(originalUrl);
+  if (wayback) return wayback;
 
-  const wayback = await readMaybe(
-    `https://web.archive.org/web/${originalUrl}`,
-    12000,
+  const tries = await Promise.all(
+    ARCHIVE_HOSTS.map(async (host) => {
+      const hit = await readMaybe(`https://${host}/newest/${originalUrl}`, 8000);
+      if (hit && looksLikeSnapshot(hit.body) && !looksLikeChallenge(hit.body)) {
+        return { html: stripArchiveChrome(hit.body), snapshotUrl: hit.finalUrl };
+      }
+      return null;
+    }),
   );
-  if (wayback && looksLikeSnapshot(wayback.body)) {
-    return { html: stripArchiveChrome(wayback.body), snapshotUrl: wayback.finalUrl };
+  return tries.find(Boolean) ?? null;
+}
+
+async function fetchWaybackSnapshot(
+  originalUrl: string,
+): Promise<{ html: string; snapshotUrl: string } | null> {
+  const index = await readMaybe(
+    `https://archive.org/wayback/available?url=${encodeURIComponent(originalUrl)}`,
+    8000,
+  );
+  if (!index) return null;
+  try {
+    const data = JSON.parse(index.body) as {
+      archived_snapshots?: { closest?: { url?: string; status?: string } };
+    };
+    const snap = data.archived_snapshots?.closest?.url;
+    if (!snap) return null;
+    const href = snap.replace(/^http:/, "https:");
+    const page = await readMaybe(href, 16000);
+    if (!page || looksLikeChallenge(page.body) || !looksLikeSnapshot(page.body)) {
+      return null;
+    }
+    return { html: stripArchiveChrome(page.body), snapshotUrl: page.finalUrl };
+  } catch {
+    return null;
   }
-  return null;
 }
 
 export function extractArchivedPage(

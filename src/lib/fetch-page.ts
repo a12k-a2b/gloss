@@ -5,6 +5,7 @@ import {
   fetchArchivedCopy,
   isArchiveUrl,
   looksGated,
+  looksLikeChallenge,
 } from "@/lib/archive";
 import { extractFromHtml, extractFromMarkdown, type ExtractedPage } from "@/lib/extract-page";
 import { rewriteCssUrls } from "@/lib/origin-skin";
@@ -118,6 +119,10 @@ export const fetchArticleFromUrl = createServerFn({ method: "POST" })
         page = extractFromMarkdown(first.body, first.finalUrl);
       } else {
         page = await attachOriginCss(extractFromHtml(first.body, first.finalUrl));
+      }
+
+      if (looksLikeChallenge(first.body)) {
+        page = { ...page, text: "", blocks: [] };
       }
 
       if (!isArchiveUrl(safe.href) && looksGated(page, first.body)) {

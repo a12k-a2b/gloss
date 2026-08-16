@@ -84,16 +84,95 @@ function scoreNode(el: Element): number {
 }
 
 function stripJunk(root: Element) {
-  const kill = root.querySelectorAll(
-    "nav, footer, aside, form, script, style, noscript, iframe:not([src*='youtu']):not([src*='vimeo']), [id*='comment' i], [class*='comments' i], [class*='recirc' i], [class*='related-' i], [class*='newsletter' i], [class*='subscribe' i], [class*='social-share' i], [class*='outbrain' i], [class*='taboola' i], [data-name='show-comments'], [data-name='comment-bubble'], .comments-button, .share-buttons, .save-article",
-  );
-  for (const n of kill) {
+  const killSel = [
+    "nav",
+    "footer",
+    "aside",
+    "form",
+    "script",
+    "style",
+    "noscript",
+    "iframe:not([src*='youtu']):not([src*='vimeo'])",
+    "[id*='comment' i]",
+    "[class*='comments' i]",
+    "[class*='recirc' i]",
+    "[class*='related-' i]",
+    "[class*='newsletter' i]",
+    "[class*='subscribe' i]",
+    "[class*='social' i]",
+    "[class*='share' i]",
+    "[class*='outbrain' i]",
+    "[class*='taboola' i]",
+    "[class*='tooltip' i]",
+    "[class*='top-menu' i]",
+    "[class*='nav__local' i]",
+    "[data-name='show-comments']",
+    "[data-name='comment-bubble']",
+    ".comments-button",
+    ".share-buttons",
+    ".save-article",
+    ".related-list",
+    ".post__aside",
+    ".q-tooltip",
+  ].join(", ");
+
+  for (const n of [...root.querySelectorAll(killSel)]) {
     if (n === root) continue;
-    if (n.querySelector("p") && (n.textContent ?? "").length > 2000 && !/comment|recirc|related|newsletter|subscribe/i.test(`${n.id} ${n.className}`)) {
+    const hint = `${n.id} ${n.getAttribute("class") ?? ""}`;
+    if (
+      n.querySelector("p") &&
+      (n.textContent ?? "").length > 2400 &&
+      !/comment|recirc|related|newsletter|subscribe|share|social|aside|top-menu/i.test(hint)
+    ) {
       continue;
     }
     n.remove();
   }
+
+  for (const n of [...root.querySelectorAll("button, a, div, span, section, ul, ol, h2, h3")]) {
+    if (n === root) continue;
+    if (looksLikeChrome(n)) n.remove();
+  }
+}
+
+const CHROME_LABEL =
+  /^(save( article)?|read later|share|facebook|twitter|linkedin|reddit|pocket|ycombinator|copy(ed| link)?!?|email|topics|home|log in|sign in|subscribe|follow|listen)$/i;
+
+function looksLikeChrome(el: Element): boolean {
+  const hint = `${el.id} ${el.getAttribute("class") ?? ""}`.toLowerCase();
+  if (/nav__local|top-menu|share|social|tooltip|save-article|read-later|post__aside|related-list/.test(hint)) {
+    return true;
+  }
+  const text = (el.textContent ?? "").replace(/\s+/g, " ").trim();
+  if (!text) {
+    return !!el.querySelector("svg") && !el.querySelector("img, video, p");
+  }
+  if (CHROME_LABEL.test(text)) return true;
+  if (text.length < 80 && /save article|read later|copy link|copied!?/.test(text.toLowerCase())) {
+    return true;
+  }
+  const links = el.querySelectorAll("a");
+  if (links.length >= 5 && text.length < 220 && !el.querySelector("p")) return true;
+  if (el.querySelector("svg") && text.length < 48 && !el.querySelector("p, figure, img")) return true;
+  return false;
+}
+
+function wordCount(el: Element): number {
+  return (el.textContent ?? "").split(/\s+/).filter(Boolean).length;
+}
+
+function preferInner(best: Element, hinted: Element[]): Element {
+  let pick = best;
+  for (const inner of hinted) {
+    if (pick !== inner && pick.contains(inner)) {
+      const innerWords = wordCount(inner);
+      const parentWords = wordCount(pick);
+      if (innerWords > 160 && parentWords > 0 && innerWords / parentWords > 0.7) {
+        pick = inner;
+      }
+    }
+  }
+  return pick;
 }
 
 export function pickArticleHtml(html: string, pageUrl: string): string {
@@ -136,9 +215,14 @@ export function pickArticleHtml(html: string, pageUrl: string): string {
       best = el;
     }
   }
+  best = preferInner(best, hinted);
 
   const clone = best.cloneNode(true) as Element;
   stripJunk(clone);
+  if (!clone.querySelector("h1")) {
+    const hed = document.querySelector("h1");
+    if (hed) clone.insertBefore(hed.cloneNode(true), clone.firstChild);
+  }
   const out = clone.innerHTML || (clone as { innerHTML?: string }).innerHTML || "";
   return out.length > 80 ? out : (document.querySelector("body")?.innerHTML ?? html);
 }
