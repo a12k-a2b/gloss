@@ -1,3 +1,5 @@
+import type { OriginSkin } from "@/lib/origin-skin";
+
 export type Block =
   | { type: "h1" | "h2" | "h3" | "p" | "quote"; text: string }
   | { type: "list"; ordered: boolean; items: string[] }
@@ -54,6 +56,7 @@ export type Article = {
   url?: string;
   addedAt?: number;
   field?: string;
+  origin?: OriginSkin;
   blocks: Block[];
   terms: Term[];
 };

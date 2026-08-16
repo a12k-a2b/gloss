@@ -28,6 +28,7 @@ type Settings = {
   contrast: ContrastName;
   typeScale: TypeScale;
   articleId: string;
+  formatSaved: boolean;
 };
 
 export type AskState = {
@@ -50,6 +51,7 @@ function loadSettings(): Settings {
     contrast: "standard",
     typeScale: 1,
     articleId: SEED_ARTICLES[0].id,
+    formatSaved: true,
   };
   if (typeof window === "undefined") return fallback;
   try {
@@ -96,6 +98,7 @@ type ReaderState = {
   libraryOpen: boolean;
   importOpen: boolean;
   hintSeen: boolean;
+  formatSaved: boolean;
   ask: AskState | null;
   pulseToken: string | null;
   hydrate: () => void;
@@ -111,6 +114,7 @@ type ReaderState = {
   setMobilePane: (pane: MobilePane) => void;
   setLibraryOpen: (open: boolean) => void;
   setImportOpen: (open: boolean) => void;
+  setFormatSaved: (on: boolean) => void;
   dismissHint: () => void;
   applyAskTap: (input: {
     blockKey: string;
@@ -166,6 +170,7 @@ export const useReader = create<ReaderState>((set, get) => ({
   libraryOpen: false,
   importOpen: false,
   hintSeen: true,
+  formatSaved: true,
   ask: null,
   pulseToken: null,
   hydrate: () => {
@@ -219,7 +224,14 @@ export const useReader = create<ReaderState>((set, get) => ({
     try {
       localStorage.setItem(CUSTOM_KEY, JSON.stringify(next));
     } catch {
-      /* quota */
+      try {
+        localStorage.setItem(
+          CUSTOM_KEY,
+          JSON.stringify(next.map((a) => ({ ...a, origin: undefined }))),
+        );
+      } catch {
+        /* quota */
+      }
     }
     persistSettings({ articleId: article.id });
     set({
@@ -261,6 +273,10 @@ export const useReader = create<ReaderState>((set, get) => ({
   setMobilePane: (mobilePane) => set({ mobilePane }),
   setLibraryOpen: (libraryOpen) => set({ libraryOpen }),
   setImportOpen: (importOpen) => set({ importOpen }),
+  setFormatSaved: (formatSaved) => {
+    persistSettings({ formatSaved });
+    set({ formatSaved });
+  },
   dismissHint: () => {
     try {
       localStorage.setItem("gloss-hint-v2", "1");

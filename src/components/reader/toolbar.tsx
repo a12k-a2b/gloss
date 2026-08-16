@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { BookOpen, Contrast, Library, Minus, Plus, SunMedium } from "lucide-react";
+import { BookOpen, Contrast, Library, Minus, Newspaper, Plus, SunMedium } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useCurrentArticle, useReader } from "@/store/reader";
 
@@ -42,6 +42,9 @@ export function Toolbar() {
   const setContrast = useReader((s) => s.setContrast);
   const setLibraryOpen = useReader((s) => s.setLibraryOpen);
   const setImportOpen = useReader((s) => s.setImportOpen);
+  const formatSaved = useReader((s) => s.formatSaved);
+  const setFormatSaved = useReader((s) => s.setFormatSaved);
+  const hasOrigin = !!article.origin;
 
   return (
     <header className="flex h-14 shrink-0 items-center gap-1 border-b border-rule bg-paper px-2">
@@ -59,6 +62,16 @@ export function Toolbar() {
       </div>
 
       <div className="mx-1 h-5 w-px bg-rule" />
+
+      {hasOrigin ? (
+        <IconBtn
+          label={formatSaved ? "Gloss page" : "As published"}
+          pressed={formatSaved}
+          onClick={() => setFormatSaved(!formatSaved)}
+        >
+          <Newspaper className="size-5" strokeWidth={1.6} />
+        </IconBtn>
+      ) : null}
 
       <IconBtn
         label="Smaller type"

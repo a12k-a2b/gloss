@@ -1,4 +1,11 @@
 import { parseImportedText } from "@/lib/parse-import";
+import {
+  collectInlineCss,
+  collectStylesheetHrefs,
+  extractOriginHtml,
+  originLooksUseful,
+  type OriginSkin,
+} from "@/lib/origin-skin";
 import type { Block } from "@/lib/types";
 
 export type ExtractedPage = {
@@ -9,6 +16,9 @@ export type ExtractedPage = {
   url: string;
   text: string;
   blocks: Block[];
+  origin?: OriginSkin;
+  stylesheetHrefs?: string[];
+  inlineCss?: string;
 };
 
 const JUNK =
@@ -103,6 +113,10 @@ export function extractFromHtml(html: string, url: string): ExtractedPage {
     .join("\n")
     .trim();
   const source = author ? `${author} · ${host}` : host;
+  const originHtml = extractOriginHtml(html, url);
+  const origin = originLooksUseful(originHtml)
+    ? { html: originHtml.slice(0, 400_000), css: "" }
+    : undefined;
   return {
     title: title.slice(0, 180),
     dek: dek.slice(0, 280),
@@ -111,6 +125,9 @@ export function extractFromHtml(html: string, url: string): ExtractedPage {
     url,
     text,
     blocks: parsed.blocks.length > 0 ? parsed.blocks : [{ type: "p", text }],
+    origin,
+    stylesheetHrefs: collectStylesheetHrefs(html, url),
+    inlineCss: collectInlineCss(html).slice(0, 200_000),
   };
 }
 

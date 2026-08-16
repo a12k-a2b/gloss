@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
+import { OriginArticle } from "@/components/reader/origin-article";
 import { cn } from "@/lib/cn";
 import { tokensFromParts, tokenize, padContains, type AskToken } from "@/lib/ask-select";
 import { markArticle, type MarkedBlock, type TextPart } from "@/lib/wrap-terms";
@@ -337,17 +338,31 @@ export function ArticlePane({ article }: { article: Article }) {
   const setPulseToken = useReader((s) => s.setPulseToken);
   const ask = useReader((s) => s.ask);
   const pulseToken = useReader((s) => s.pulseToken);
+  const formatSaved = useReader((s) => s.formatSaved);
   const marked = useMemo(() => markArticle(article), [article]);
+  const useOrigin = !!(formatSaved && article.origin);
+
+  const onOriginReady = useCallback(
+    (payload: { text: string; tokens: AskToken[]; root: ShadowRoot | null }) => {
+      surfaces.set("origin:0", { text: payload.text, tokens: payload.tokens });
+    },
+    [],
+  );
 
   useEffect(() => {
-    if (!focusedTermId || !scroller.current || ask) return;
-    const el = scroller.current.querySelector<HTMLElement>(
-      `[data-term="${focusedTermId}"][data-first="true"]`,
-    );
+    const host = scroller.current;
+    if (!focusedTermId || !host || ask) return;
+    const shadow = host.querySelector(".origin-host")?.shadowRoot;
+    const el =
+      shadow?.querySelector<HTMLElement>(
+        `[data-term="${focusedTermId}"][data-first="true"]`,
+      ) ??
+      host.querySelector<HTMLElement>(
+        `[data-term="${focusedTermId}"][data-first="true"]`,
+      );
     if (!el) return;
-    const parent = scroller.current;
     const er = el.getBoundingClientRect();
-    const pr = parent.getBoundingClientRect();
+    const pr = host.getBoundingClientRect();
     if (er.top < pr.top + 80 || er.bottom > pr.bottom - 40) {
       el.scrollIntoView({ block: "center", behavior: "smooth" });
     }
@@ -366,14 +381,21 @@ export function ArticlePane({ article }: { article: Article }) {
     const dy = e.clientY - start.y;
     if (Math.hypot(dx, dy) > 14) return;
 
-    const target = (e.target as HTMLElement | null)?.closest?.("[data-token]") as
-      | HTMLElement
-      | null;
-    const marks = scroller.current
-      ? Array.from(scroller.current.querySelectorAll<HTMLElement>(".ask-mark")).map((n) =>
-          n.getBoundingClientRect(),
-        )
-      : [];
+    const path = e.nativeEvent.composedPath();
+    let target: HTMLElement | null = null;
+    for (const node of path) {
+      if (node instanceof HTMLElement && node.dataset.token) {
+        target = node;
+        break;
+      }
+    }
+    const host = scroller.current;
+    const shadow = host?.querySelector(".origin-host")?.shadowRoot;
+    const markNodes = [
+      ...(host?.querySelectorAll<HTMLElement>(".ask-mark") ?? []),
+      ...(shadow?.querySelectorAll<HTMLElement>(".ask-mark") ?? []),
+    ];
+    const marks = markNodes.map((n) => n.getBoundingClientRect());
     const inPad = ask ? padContains(marks, e.clientX, e.clientY, 56) : false;
 
     if (ask && inPad) {
@@ -449,36 +471,52 @@ export function ArticlePane({ article }: { article: Article }) {
         pointer.current = null;
       }}
     >
-      <article className="article-body article-measure mx-auto">
-        <p className="caps mb-3">
-          {article.source}
+      <article className={cn("article-measure mx-auto", !useOrigin && "article-body")}>
+        <p className="caps mb-3 px-1">
+          {useOrigin ? "As published" : article.source}
           <span className="mx-2 text-rule-strong">·</span>
-          {article.minutes} min
+          {useOrigin ? article.source : `${article.minutes} min`}
         </p>
-        <h1 className="mb-3 font-serif text-3xl font-medium leading-tight tracking-display text-balance">
-          {article.title}
-        </h1>
-        <p className="mb-8 font-serif text-lg leading-snug text-ink-soft italic text-pretty">
-          {article.dek}
-        </p>
-        {marked.map((block, i) => (
-          <BlockView
-            key={i}
-            block={block}
-            blockIndex={i}
+        {useOrigin ? (
+          <OriginArticle
+            article={article}
             activeId={focusedTermId}
             ask={
               ask
-                ? {
-                    blockKey: ask.blockKey,
-                    tokenStart: ask.tokenStart,
-                    tokenEnd: ask.tokenEnd,
-                  }
+                ? { tokenStart: ask.tokenStart, tokenEnd: ask.tokenEnd }
                 : null
             }
             pulseToken={pulseToken}
+            onReady={onOriginReady}
           />
-        ))}
+        ) : (
+          <>
+            <h1 className="mb-3 font-serif text-3xl font-medium leading-tight tracking-display text-balance">
+              {article.title}
+            </h1>
+            <p className="mb-8 font-serif text-lg leading-snug text-ink-soft italic text-pretty">
+              {article.dek}
+            </p>
+            {marked.map((block, i) => (
+              <BlockView
+                key={i}
+                block={block}
+                blockIndex={i}
+                activeId={focusedTermId}
+                ask={
+                  ask
+                    ? {
+                        blockKey: ask.blockKey,
+                        tokenStart: ask.tokenStart,
+                        tokenEnd: ask.tokenEnd,
+                      }
+                    : null
+                }
+                pulseToken={pulseToken}
+              />
+            ))}
+          </>
+        )}
         <div className="h-16" />
       </article>
     </section>

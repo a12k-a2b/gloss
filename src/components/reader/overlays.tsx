@@ -245,6 +245,7 @@ export function ImportSheet() {
     source: string,
     blocks: Article["blocks"],
     pageUrl?: string,
+    origin?: Article["origin"],
   ) => {
     const flat = flattenBlocks(blocks);
     setBusy("teach");
@@ -284,6 +285,7 @@ export function ImportSheet() {
       url: pageUrl,
       addedAt: Date.now(),
       field: result.analysis.field,
+      origin,
       blocks,
       terms,
     };
@@ -314,6 +316,7 @@ export function ImportSheet() {
           brought.page.source,
           brought.page.blocks,
           brought.page.url,
+          brought.page.origin,
         );
         return;
       }
@@ -359,8 +362,9 @@ export function ImportSheet() {
           <p className="font-serif text-md leading-reading text-ink-soft">
             Paste any public blog or article link — software, law, biology,
             economics, whatever you are teaching yourself. Gloss opens the
-            page, keeps the writing, and fills the right column with a note
-            for every name a reader new to that field would trip on.
+            page, keeps the writing (and the publication’s type, if it can),
+            and fills the right column with a note for every name a reader
+            new to that field would trip on.
           </p>
           <label className="block">
             <span className="caps">Link</span>

@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { extractFromHtml, extractFromMarkdown, type ExtractedPage } from "@/lib/extract-page";
+import { rewriteCssUrls } from "@/lib/origin-skin";
 
 const input = z.object({
   url: z.string().min(8).max(2000),
@@ -88,6 +89,23 @@ export const fetchArticleFromUrl = createServerFn({ method: "POST" })
         page = extractFromMarkdown(first.body, first.finalUrl);
       } else {
         page = extractFromHtml(first.body, first.finalUrl);
+        if (page.origin) {
+          const sheets = await Promise.all(
+            (page.stylesheetHrefs ?? []).map(async (href) => {
+              try {
+                const file = await readUrl(href, { Accept: "text/css,*/*;q=0.1" });
+                return rewriteCssUrls(file.body, href);
+              } catch {
+                return "";
+              }
+            }),
+          );
+          const css = [page.inlineCss ?? "", ...sheets]
+            .filter(Boolean)
+            .join("\n")
+            .slice(0, 350_000);
+          page.origin = { ...page.origin, css };
+        }
       }
 
       if (page.text.replace(/\s+/g, " ").trim().length < 280) {
