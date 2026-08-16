@@ -40,6 +40,7 @@ type Step = {
   kicker: string;
   title: string;
   beaver: string;
+  aside?: string;
   gate: Gate;
   next?: string;
   wait?: Wait;
@@ -47,21 +48,51 @@ type Step = {
 
 const STEPS: Step[] = [
   {
-    kicker: "The beaver",
-    title: "This is Gloss. I’ll walk you through it — hands on, not a slideshow.",
-    beaver: "First we learn how to read. Then, if you want, how to dress the room.",
+    kicker: "Why I built this",
+    title: "I got tired of rereading a sentence and still not knowing what it meant.",
+    beaver: "I’m the beaver. I made Gloss so you can stay in the essay — and only lean over when a word is fog.",
+    aside: "The first page I tried it on was Denys’s “I’m a Happy engineer now.” I hit “I run ArgoCD against a GitOps repository” and just… stopped. What kitchen is that.",
     gate: "look",
-    next: "Continue",
+    next: "That’s me",
+  },
+  {
+    kicker: "The promise",
+    title: "Read. Enjoy it. When you don’t know a word, ask with almost no effort. When you want one step deeper, ask again.",
+    beaver: "Underline already has a note. A swipe is the easy deeper. A double-tap is “wait, what is THAT.”",
+    aside: "Low friction is the whole product. If it feels like homework, I failed.",
+    gate: "look",
+    next: "Show me",
   },
   {
     kicker: "The spread",
     title: "Essay on the left. Teacher on the right. That’s the whole room.",
-    beaver: "Ninety-five percent of your time stays on the left. Glance right when a word is fog.",
+    beaver: "Ninety-five percent of your time stays on the left. The right is a glance, not a second essay.",
     gate: "look",
     next: "I see it",
   },
   {
-    kicker: "Ask a word",
+    kicker: "The easy deeper",
+    title: "On the right: put a finger on a word-card and swipe it toward the essay (to the left).",
+    beaver: "Less work than a tap, once you have the habit. The long lesson should slide in — analogy, picture, the works.",
+    gate: "glossary",
+    wait: "open",
+  },
+  {
+    kicker: "The easy deeper",
+    title: "Now swipe that lesson back to the right — or use the back arrow.",
+    beaver: "You’re in the list again. The essay never left.",
+    gate: "glossary",
+    wait: "close",
+  },
+  {
+    kicker: "Tap works too",
+    title: "A tap on a card, or one tap on an underlined word in the essay, opens the same lesson.",
+    beaver: "Swipe or tap. I don’t mind. Swipe is usually the lighter hand.",
+    gate: "look",
+    next: "Got it",
+  },
+  {
+    kicker: "Ask a word we missed",
     title: "In the essay: pick a word that is not underlined. Tap it twice.",
     beaver: "Once just wiggles it. Twice is “what is that?” The right column should start teaching.",
     gate: "article",
@@ -359,6 +390,7 @@ export function Onboarding() {
         <h2 id="tour-title" className="tour-title">
           {card.title}
         </h2>
+        {card.aside ? <p className="tour-aside">{card.aside}</p> : null}
         {card.next ? (
           <button
             type="button"

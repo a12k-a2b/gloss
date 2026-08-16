@@ -545,6 +545,15 @@
   line-height: 1.25;
   text-wrap: balance;
 }
+.tour-aside {
+  margin-top: 0.4rem;
+  font-family: var(--font-serif);
+  font-size: 0.88rem;
+  font-style: italic;
+  line-height: 1.4;
+  color: var(--color-ink-soft);
+  text-wrap: pretty;
+}
 .tour-wait {
   margin-top: 0.35rem;
   font-family: var(--font-serif);
