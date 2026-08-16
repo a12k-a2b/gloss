@@ -363,8 +363,8 @@ export function ImportSheet() {
             Paste any public blog or article link — software, law, biology,
             economics, whatever you are teaching yourself. Gloss opens the
             page, keeps the writing (and the publication’s type, if it can),
-            and fills the right column with a note for every name a reader
-            new to that field would trip on.
+            and fills the right column. If the live page is gated, it looks
+            for a public archived copy.
           </p>
           <label className="block">
             <span className="caps">Link</span>

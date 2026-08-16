@@ -1,5 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import {
+  extractArchivedPage,
+  fetchArchivedCopy,
+  isArchiveUrl,
+  looksGated,
+} from "@/lib/archive";
 import { extractFromHtml, extractFromMarkdown, type ExtractedPage } from "@/lib/extract-page";
 import { rewriteCssUrls } from "@/lib/origin-skin";
 
@@ -76,6 +82,29 @@ async function readUrl(url: string, extraHeaders?: Record<string, string>): Prom
   };
 }
 
+async function attachOriginCss(page: ExtractedPage): Promise<ExtractedPage> {
+  if (!page.origin) return page;
+  const sheets = await Promise.all(
+    (page.stylesheetHrefs ?? []).map(async (href) => {
+      try {
+        const file = await readUrl(href, { Accept: "text/css,*/*;q=0.1" });
+        return rewriteCssUrls(file.body, href);
+      } catch {
+        return "";
+      }
+    }),
+  );
+  const css = [page.inlineCss ?? "", ...sheets]
+    .filter(Boolean)
+    .join("\n")
+    .slice(0, 350_000);
+  return { ...page, origin: { ...page.origin, css } };
+}
+
+function longerPage(a: ExtractedPage, b: ExtractedPage): ExtractedPage {
+  return b.text.length > a.text.length ? b : a;
+}
+
 export const fetchArticleFromUrl = createServerFn({ method: "POST" })
   .validator((value: unknown) => input.parse(value))
   .handler(async ({ data }): Promise<
@@ -88,23 +117,16 @@ export const fetchArticleFromUrl = createServerFn({ method: "POST" })
       if (first.type.includes("text/plain") || first.type.includes("markdown")) {
         page = extractFromMarkdown(first.body, first.finalUrl);
       } else {
-        page = extractFromHtml(first.body, first.finalUrl);
-        if (page.origin) {
-          const sheets = await Promise.all(
-            (page.stylesheetHrefs ?? []).map(async (href) => {
-              try {
-                const file = await readUrl(href, { Accept: "text/css,*/*;q=0.1" });
-                return rewriteCssUrls(file.body, href);
-              } catch {
-                return "";
-              }
-            }),
+        page = await attachOriginCss(extractFromHtml(first.body, first.finalUrl));
+      }
+
+      if (!isArchiveUrl(safe.href) && looksGated(page, first.body)) {
+        const snap = await fetchArchivedCopy(safe.href);
+        if (snap) {
+          const archived = await attachOriginCss(
+            extractArchivedPage(snap.html, safe.href),
           );
-          const css = [page.inlineCss ?? "", ...sheets]
-            .filter(Boolean)
-            .join("\n")
-            .slice(0, 350_000);
-          page.origin = { ...page.origin, css };
+          page = longerPage(page, archived);
         }
       }
 
@@ -120,6 +142,7 @@ export const fetchArticleFromUrl = createServerFn({ method: "POST" })
               title: page.title !== "Untitled page" ? page.title : fallback.title,
               dek: page.dek || fallback.dek,
               source: page.source || fallback.source,
+              origin: page.origin,
             };
           }
         } catch {
