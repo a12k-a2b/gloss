@@ -113,6 +113,7 @@ type ReaderState = {
   libraryOpen: boolean;
   importOpen: boolean;
   hintSeen: boolean;
+  onboarded: boolean;
   formatSaved: boolean;
   marginFollow: boolean;
   paginate: boolean;
@@ -141,6 +142,8 @@ type ReaderState = {
   setPaginate: (on: boolean) => void;
   setShelfCode: (code: string) => void;
   dismissHint: () => void;
+  finishOnboarding: () => void;
+  replayOnboarding: () => void;
   applyAskTap: (input: {
     blockKey: string;
     tokenIndex: number;
@@ -197,6 +200,7 @@ export const useReader = create<ReaderState>((set, get) => ({
   libraryOpen: false,
   importOpen: false,
   hintSeen: true,
+  onboarded: false,
   formatSaved: true,
   marginFollow: true,
   paginate: false,
@@ -209,8 +213,10 @@ export const useReader = create<ReaderState>((set, get) => ({
     const custom = loadCustom();
     const extraTerms = loadAsked();
     let hintSeen = true;
+    let onboarded = false;
     try {
       hintSeen = localStorage.getItem("gloss-hint-v2") === "1";
+      onboarded = localStorage.getItem("gloss-onboard-v1") === "1";
     } catch {
       hintSeen = true;
     }
@@ -220,6 +226,7 @@ export const useReader = create<ReaderState>((set, get) => ({
       extraTerms,
       hydrated: true,
       hintSeen,
+      onboarded,
     });
   },
   setTheme: (theme) => {
@@ -359,6 +366,22 @@ export const useReader = create<ReaderState>((set, get) => ({
       /* ignore */
     }
     set({ hintSeen: true });
+  },
+  finishOnboarding: () => {
+    try {
+      localStorage.setItem("gloss-onboard-v1", "1");
+    } catch {
+      /* ignore */
+    }
+    set({ onboarded: true, hintSeen: true });
+  },
+  replayOnboarding: () => {
+    try {
+      localStorage.removeItem("gloss-onboard-v1");
+    } catch {
+      /* ignore */
+    }
+    set({ onboarded: false, libraryOpen: false });
   },
   applyAskTap: (input) => {
     const tokens = input.tokens ?? tokenize(input.fullText);

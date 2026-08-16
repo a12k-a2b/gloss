@@ -76,6 +76,7 @@ export function LibrarySheet() {
   const shelfCode = useReader((s) => s.shelfCode);
   const setShelfCode = useReader((s) => s.setShelfCode);
   const mergeArticles = useReader((s) => s.mergeArticles);
+  const replayOnboarding = useReader((s) => s.replayOnboarding);
   const [join, setJoin] = useState("");
   const [shelfNote, setShelfNote] = useState<string | null>(null);
 
@@ -286,6 +287,13 @@ export function LibrarySheet() {
             >
               Download Gloss for the DC-1
             </a>
+            <button
+              type="button"
+              onClick={replayOnboarding}
+              className="mt-3 block font-sans text-sm underline decoration-1 underline-offset-2"
+            >
+              Meet the beaver again
+            </button>
           </div>
         </div>
       </div>

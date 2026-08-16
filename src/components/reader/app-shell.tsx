@@ -2,7 +2,8 @@ import { useEffect } from "react";
 import { ArticlePane } from "@/components/reader/article-pane";
 import { GlossaryPane } from "@/components/reader/glossary-pane";
 import { NativeMenuShield } from "@/components/reader/native-shield";
-import { FirstHint, ImportSheet, LibrarySheet } from "@/components/reader/overlays";
+import { ImportSheet, LibrarySheet } from "@/components/reader/overlays";
+import { Onboarding } from "@/components/reader/onboarding";
 import { ShareInbox } from "@/components/reader/share-inbox";
 import { Toolbar } from "@/components/reader/toolbar";
 import { useSystemTheme } from "@/hooks/use-system-theme";
@@ -92,7 +93,7 @@ export function AppShell() {
           </div>
         </div>
 
-        {hydrated ? <FirstHint /> : null}
+        {hydrated ? <Onboarding /> : null}
       </div>
       <LibrarySheet />
       <ImportSheet />

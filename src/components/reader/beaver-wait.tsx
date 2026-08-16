@@ -10,9 +10,11 @@ const FRAMES = [
 export function BeaverWait({
   line,
   detail,
+  word = true,
 }: {
   line: string;
   detail?: string;
+  word?: boolean;
 }) {
   const [frame, setFrame] = useState(0);
   useEffect(() => {
@@ -29,7 +31,9 @@ export function BeaverWait({
         width={220}
         height={180}
       />
-      <img src="/beaver/loading-word.png" alt="loading" className="beaver-wait-word" />
+      {word ? (
+        <img src="/beaver/loading-word.png" alt="loading" className="beaver-wait-word" />
+      ) : null}
       <p className="beaver-wait-line">{line}</p>
       {detail ? <p className="beaver-wait-detail">{detail}</p> : null}
     </div>
