@@ -1,3 +1,5 @@
+import { pickArticleHtml as pickFromDom } from "@/lib/pick-article";
+
 export type OriginSkin = {
   html: string;
   css: string;
@@ -51,26 +53,10 @@ export function collectInlineCss(html: string): string {
   return parts.join("\n");
 }
 
-function pickArticleHtml(html: string): string {
-  const cleaned = html.replace(/<!--[\s\S]*?-->/g, " ");
-  const candidates = [
-    cleaned.match(/<article\b[^>]*>([\s\S]*?)<\/article>/i)?.[1],
-    cleaned.match(/<main\b[^>]*>([\s\S]*?)<\/main>/i)?.[1],
-    cleaned.match(
-      /<(?:div|section)[^>]+(?:class|id)=["'][^"']*(?:post-content|entry-content|article-content|post-body|article-body|content-body|prose|entry-body)[^"']*["'][^>]*>([\s\S]*?)<\/(?:div|section)>/i,
-    )?.[1],
-  ].filter((c): c is string => !!c && c.length > 400);
-  if (candidates.length === 0) {
-    return cleaned.match(/<body\b[^>]*>([\s\S]*?)<\/body>/i)?.[1] ?? cleaned;
-  }
-  return candidates.sort((a, b) => b.length - a.length)[0] ?? cleaned;
-}
-
 function dropChromeBlocks(html: string): string {
   return html.replace(
     /<(\w+)([^>]*)>([\s\S]*?)<\/\1>/gi,
-    (full, tag: string, attrs: string, inner: string) => {
-      const idClass = `${attrs} ${inner.slice(0, 120)}`;
+    (full, tag: string, attrs: string) => {
       const hint = `${attrs}`;
       if (CHROME_CLASS.test(hint) && !/figure|img|video|picture|figcaption/i.test(tag)) {
         return " ";
@@ -82,24 +68,23 @@ function dropChromeBlocks(html: string): string {
         const src = attrs.match(/src=["']([^"']+)["']/i)?.[1] ?? "";
         return MEDIA_IFRAME.test(src) ? full : " ";
       }
-      void idClass;
       return full;
     },
   );
 }
 
 function rewriteUrls(html: string, pageUrl: string): string {
-  return html.replace(
-    /\s(href|src|poster)=["']([^"']+)["']/gi,
-    (_, attr: string, value: string) => {
-      if (value.startsWith("data:") || value.startsWith("#") || value.startsWith("mailto:")) {
-        return ` ${attr}="${value}"`;
-      }
-      return ` ${attr}="${absolutize(value, pageUrl)}"`;
-    },
-  ).replace(
-    /\ssrcset=["']([^"']+)["']/gi,
-    (_, value: string) => {
+  return html
+    .replace(
+      /\s(href|src|poster)=["']([^"']+)["']/gi,
+      (_, attr: string, value: string) => {
+        if (value.startsWith("data:") || value.startsWith("#") || value.startsWith("mailto:")) {
+          return ` ${attr}="${value}"`;
+        }
+        return ` ${attr}="${absolutize(value, pageUrl)}"`;
+      },
+    )
+    .replace(/\ssrcset=["']([^"']+)["']/gi, (_, value: string) => {
       const next = value
         .split(",")
         .map((part) => {
@@ -109,8 +94,7 @@ function rewriteUrls(html: string, pageUrl: string): string {
         })
         .join(", ");
       return ` srcset="${next}"`;
-    },
-  );
+    });
 }
 
 const ALLOWED = new Set(
@@ -183,7 +167,7 @@ export function rewriteCssUrls(css: string, href: string): string {
 }
 
 export function extractOriginHtml(fullHtml: string, pageUrl: string): string {
-  const raw = pickArticleHtml(fullHtml);
+  const raw = pickFromDom(fullHtml.replace(/<!--[\s\S]*?-->/g, " "), pageUrl);
   return sanitizeOriginHtml(raw, pageUrl);
 }
 

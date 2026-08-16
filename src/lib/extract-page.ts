@@ -1,4 +1,4 @@
-import { parseImportedText } from "@/lib/parse-import";
+import { pickArticleHtml } from "@/lib/pick-article";
 import {
   collectInlineCss,
   collectStylesheetHrefs,
@@ -6,6 +6,7 @@ import {
   originLooksUseful,
   type OriginSkin,
 } from "@/lib/origin-skin";
+import { parseImportedText } from "@/lib/parse-import";
 import type { Block } from "@/lib/types";
 
 export type ExtractedPage = {
@@ -20,9 +21,6 @@ export type ExtractedPage = {
   stylesheetHrefs?: string[];
   inlineCss?: string;
 };
-
-const JUNK =
-  /<(script|style|noscript|svg|iframe|canvas|form|nav|footer|aside|button)(\s[^>]*)?>[\s\S]*?<\/\1>/gi;
 
 function decode(s: string): string {
   return s
@@ -68,29 +66,6 @@ function tagText(html: string, tag: string): string {
   return decode(m[1].replace(/<[^>]+>/g, " "));
 }
 
-function firstMatch(html: string, re: RegExp): string {
-  const m = html.match(re);
-  return m?.[1] ?? "";
-}
-
-function pickMain(html: string): string {
-  const cleaned = html
-    .replace(JUNK, " ")
-    .replace(/<!--[\s\S]*?-->/g, " ");
-  const candidates = [
-    firstMatch(cleaned, /<article\b[^>]*>([\s\S]*?)<\/article>/i),
-    firstMatch(cleaned, /<main\b[^>]*>([\s\S]*?)<\/main>/i),
-    firstMatch(
-      cleaned,
-      /<(?:div|section)[^>]+(?:class|id)=["'][^"']*(?:post-content|entry-content|article-content|post-body|article-body|content-body|prose)[^"']*["'][^>]*>([\s\S]*?)<\/(?:div|section)>/i,
-    ),
-  ].filter((c) => c.length > 400);
-  if (candidates.length === 0) {
-    return firstMatch(cleaned, /<body\b[^>]*>([\s\S]*?)<\/body>/i) || cleaned;
-  }
-  return candidates.sort((a, b) => b.length - a.length)[0] ?? cleaned;
-}
-
 export function extractFromHtml(html: string, url: string): ExtractedPage {
   const parsedUrl = new URL(url);
   const host = parsedUrl.hostname.replace(/^www\./, "");
@@ -102,7 +77,7 @@ export function extractFromHtml(html: string, url: string): ExtractedPage {
     meta(html, ["og:description", "twitter:description", "description"]) ||
     "";
   const author = meta(html, ["author", "article:author"]);
-  const main = pickMain(html);
+  const main = pickArticleHtml(html, url);
   const parsed = parseImportedText(main);
   const text = parsed.blocks
     .map((b) => {
