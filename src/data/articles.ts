@@ -789,6 +789,7 @@ const happyArticle: Article = {
   title: "I'm a Happy engineer now",
   dek: "A remote control for Claude Code, a Daylight in the bag, and a cluster that never opens a street door.",
   source: "Denys Vitali · Jan 12, 2026",
+  url: "https://blog.denv.it/posts/im-happy-engineer-now/",
   minutes: 20,
   blocks: [
     {

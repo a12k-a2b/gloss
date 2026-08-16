@@ -51,6 +51,8 @@ export type Article = {
   source: string;
   minutes: number;
   custom?: boolean;
+  url?: string;
+  addedAt?: number;
   blocks: Block[];
   terms: Term[];
 };

@@ -8,6 +8,7 @@ const aiApk = fileURLToPath(new URL("./src/lib/ai.apk.ts", import.meta.url));
 const illustrateApk = fileURLToPath(
   new URL("./src/lib/illustrate.apk.ts", import.meta.url),
 );
+const fetchApk = fileURLToPath(new URL("./src/lib/fetch-page.apk.ts", import.meta.url));
 
 function apkStubs(): Plugin {
   return {
@@ -20,6 +21,9 @@ function apkStubs(): Plugin {
       if (id === "@/lib/teach" || /\/src\/lib\/teach(\.ts)?$/.test(id)) return teachApk;
       if (id === "@/lib/illustrate" || /\/src\/lib\/illustrate(\.ts)?$/.test(id)) {
         return illustrateApk;
+      }
+      if (id === "@/lib/fetch-page" || /\/src\/lib\/fetch-page(\.ts)?$/.test(id)) {
+        return fetchApk;
       }
       return null;
     },
