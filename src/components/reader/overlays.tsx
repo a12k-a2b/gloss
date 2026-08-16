@@ -12,7 +12,13 @@ import {
   unpackLibrary,
   uploadShelf,
 } from "@/lib/shelf";
-import { flattenBlocks, parseImportedText } from "@/lib/parse-import";
+import {
+  formatLogForChat,
+  loadImportLog,
+  recordImport,
+  seconds,
+  summarizeLog,
+} from "@/lib/import-log";
 import { teachPassage } from "@/lib/teach";
 import { cn } from "@/lib/cn";
 import type { Article, Term } from "@/lib/types";
@@ -264,6 +270,8 @@ export function LibrarySheet() {
             </div>
           </Section>
 
+          <ImportTimes />
+
           <div className="border-t border-rule px-5 py-4 font-serif text-sm leading-snug text-ink-soft">
             <p className="caps text-ink-faint">On the DC-1</p>
             <p className="mt-2">
@@ -281,6 +289,51 @@ export function LibrarySheet() {
         </div>
       </div>
     </div>
+  );
+}
+
+function ImportTimes() {
+  const rows = loadImportLog();
+  if (rows.length === 0) {
+    return (
+      <Section title="How long it takes">
+        <p className="px-5 pb-5 font-serif text-sm text-ink-soft">
+          Each time you bring a page, we keep how long the wait was — opening,
+          teaching, drawing. After a few imports we’ll know if the beaver sits
+          too long.
+        </p>
+      </Section>
+    );
+  }
+  return (
+    <Section title="How long it takes">
+      <div className="px-5 pb-5">
+        <p className="font-serif text-sm text-ink-soft">{summarizeLog(rows)}</p>
+        <ul className="mt-3 space-y-2">
+          {rows.slice(0, 8).map((row) => (
+            <li key={row.at} className="font-serif text-sm leading-snug">
+              <span className="text-ink">{row.title}</span>
+              <span className="text-ink-soft">
+                {" "}
+                · {seconds(row.ms.total)}
+                {row.ms.fetch != null ? ` · open ${seconds(row.ms.fetch)}` : ""}
+                {row.ms.teach != null ? ` · teach ${seconds(row.ms.teach)}` : ""}
+                {row.ms.draw != null ? ` · draw ${seconds(row.ms.draw)}` : ""}
+              </span>
+            </li>
+          ))}
+        </ul>
+        <button
+          type="button"
+          className="mt-3 font-sans text-sm underline decoration-1 underline-offset-2"
+          onClick={() => {
+            void navigator.clipboard?.writeText(formatLogForChat(rows));
+          }}
+        >
+          Copy the log
+        </button>
+      </div>
+    </Section>
   );
 }
 
@@ -382,8 +435,17 @@ export function ImportSheet() {
   ) => {
     const flat = flattenBlocks(blocks);
     setBusy("teach");
+    const t0 = performance.now();
     const result = await teachPassage(title, flat.slice(0, 16000));
+    const teachMs = Math.round(performance.now() - t0);
     if (!result.ok) {
+      recordImport({
+        title,
+        via: "paste",
+        ok: false,
+        error: result.error,
+        ms: { teach: teachMs, total: teachMs },
+      });
       setError(result.error);
       setBusy(null);
       return;
@@ -423,13 +485,27 @@ export function ImportSheet() {
       terms,
     };
     addArticle(article);
+    let drawMs: number | undefined;
+    let boards = 0;
     if (isOnline() && article.terms.length) {
       setBusy("draw");
+      const d0 = performance.now();
       await prewarmBoards(article.id, article.terms, (done, total) => {
         setDrawProgress(`${done} of ${total}`);
+        boards = total;
       });
+      drawMs = Math.round(performance.now() - d0);
     }
     if (shelfCode) void uploadShelf(shelfCode, useReader.getState().customArticles);
+    recordImport({
+      title: article.title,
+      via: "paste",
+      ok: true,
+      words: flat.split(/\s+/).length,
+      terms: article.terms.length,
+      boards,
+      ms: { teach: teachMs, draw: drawMs, total: teachMs + (drawMs ?? 0) },
+    });
     setUrl("");
     setRaw("");
     setBusy(null);
@@ -449,22 +525,55 @@ export function ImportSheet() {
           return;
         }
         setBusy("fetch");
+        const t0 = performance.now();
         const brought = await ingestUrl(href);
         if (!brought.ok) {
+          recordImport({
+            title: href,
+            url: href,
+            via: "link",
+            ok: false,
+            error: brought.error,
+            ms: {
+              fetch: brought.timing.fetchMs,
+              teach: brought.timing.teachMs,
+              total: Math.round(performance.now() - t0),
+            },
+          });
           setError(brought.error);
           setBusy(null);
           return;
         }
         addArticle(brought.article);
+        let drawMs: number | undefined;
+        let boards = 0;
         if (isOnline() && brought.article.terms.length) {
           setBusy("draw");
+          const d0 = performance.now();
           await prewarmBoards(brought.article.id, brought.article.terms, (done, total) => {
             setDrawProgress(`${done} of ${total}`);
+            boards = total;
           });
+          drawMs = Math.round(performance.now() - d0);
         }
         if (shelfCode) {
           void uploadShelf(shelfCode, useReader.getState().customArticles);
         }
+        recordImport({
+          title: brought.article.title,
+          url: brought.article.url,
+          via: "link",
+          ok: true,
+          words: flattenBlocks(brought.article.blocks).split(/\s+/).length,
+          terms: brought.article.terms.length,
+          boards,
+          ms: {
+            fetch: brought.timing.fetchMs,
+            teach: brought.timing.teachMs,
+            draw: drawMs,
+            total: Math.round(performance.now() - t0),
+          },
+        });
         setUrl("");
         setRaw("");
         setBusy(null);

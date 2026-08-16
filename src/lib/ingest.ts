@@ -3,6 +3,11 @@ import { flattenBlocks } from "@/lib/parse-import";
 import { teachPassage } from "@/lib/teach";
 import type { Article, Term } from "@/lib/types";
 
+export type IngestTiming = {
+  fetchMs: number;
+  teachMs: number;
+};
+
 function slugId(s: string) {
   return (
     s
@@ -32,13 +37,20 @@ export function extractSharedUrl(raw: string): string | null {
 
 export async function ingestUrl(
   href: string,
-): Promise<{ ok: true; article: Article } | { ok: false; error: string }> {
+): Promise<
+  | { ok: true; article: Article; timing: IngestTiming }
+  | { ok: false; error: string; timing: IngestTiming }
+> {
+  const t0 = performance.now();
   const brought = await bringPage(href);
-  if (!brought.ok) return brought;
+  const fetchMs = Math.round(performance.now() - t0);
+  if (!brought.ok) return { ...brought, timing: { fetchMs, teachMs: 0 } };
   const page = brought.page;
   const flat = flattenBlocks(page.blocks);
+  const t1 = performance.now();
   const taught = await teachPassage(page.title, flat.slice(0, 16000));
-  if (!taught.ok) return taught;
+  const teachMs = Math.round(performance.now() - t1);
+  if (!taught.ok) return { ...taught, timing: { fetchMs, teachMs } };
   const used = new Set<string>();
   const terms: Term[] = taught.analysis.terms.map((t) => {
     let id = termId(t.term);
@@ -61,6 +73,7 @@ export async function ingestUrl(
   });
   return {
     ok: true,
+    timing: { fetchMs, teachMs },
     article: {
       id: `custom-${Date.now()}`,
       title: taught.analysis.title || page.title,

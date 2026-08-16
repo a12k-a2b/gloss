@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { extractSharedUrl, ingestUrl } from "@/lib/ingest";
-import { isOnline } from "@/lib/online";
+import { recordImport } from "@/lib/import-log";
 import { prewarmBoards } from "@/lib/illustrate";
 import { uploadShelf } from "@/lib/shelf";
 import { useReader } from "@/store/reader";
@@ -41,10 +41,23 @@ export function ShareInbox() {
     const run = async (href: string, open: boolean) => {
       setBusy(true);
       setToast({ title: "Bringing that page into Gloss…" });
+      const t0 = performance.now();
       const result = await ingestUrl(href);
       if (cancelled) return;
-      setBusy(false);
       if (!result.ok) {
+        recordImport({
+          title: href,
+          url: href,
+          via: "share",
+          ok: false,
+          error: result.error,
+          ms: {
+            fetch: result.timing.fetchMs,
+            teach: result.timing.teachMs,
+            total: Math.round(performance.now() - t0),
+          },
+        });
+        setBusy(false);
         setToast({ title: "Could not bring that page in.", error: result.error });
         return;
       }
@@ -54,6 +67,20 @@ export function ShareInbox() {
         const code = useReader.getState().shelfCode;
         if (code) void uploadShelf(code, useReader.getState().customArticles);
       }
+      recordImport({
+        title: result.article.title,
+        url: result.article.url,
+        via: "share",
+        ok: true,
+        terms: result.article.terms.length,
+        boards: result.article.terms.length,
+        ms: {
+          fetch: result.timing.fetchMs,
+          teach: result.timing.teachMs,
+          total: Math.round(performance.now() - t0),
+        },
+      });
+      setBusy(false);
       setToast({ title: result.article.title, articleId: result.article.id });
       if (open) openArticle(result.article.id);
     };
