@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { BookOpen, Contrast, Library, Minus, Newspaper, Plus, SunMedium } from "lucide-react";
+import { BookOpen, Contrast, Library, ListFilter, Minus, Newspaper, Plus, SunMedium } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useCurrentArticle, useReader } from "@/store/reader";
 
@@ -44,6 +44,8 @@ export function Toolbar() {
   const setImportOpen = useReader((s) => s.setImportOpen);
   const formatSaved = useReader((s) => s.formatSaved);
   const setFormatSaved = useReader((s) => s.setFormatSaved);
+  const marginFollow = useReader((s) => s.marginFollow);
+  const setMarginFollow = useReader((s) => s.setMarginFollow);
   const hasOrigin = !!article.origin;
 
   return (
@@ -72,6 +74,13 @@ export function Toolbar() {
           <Newspaper className="size-5" strokeWidth={1.6} />
         </IconBtn>
       ) : null}
+      <IconBtn
+        label={marginFollow ? "Show the whole glossary" : "Only words on this page"}
+        pressed={marginFollow}
+        onClick={() => setMarginFollow(!marginFollow)}
+      >
+        <ListFilter className="size-5" strokeWidth={1.6} />
+      </IconBtn>
 
       <IconBtn
         label="Smaller type"

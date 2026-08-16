@@ -376,14 +376,22 @@ export function ArticlePane({ article }: { article: Article }) {
     if (!host) return;
     const shadow = host.querySelector(".origin-host")?.shadowRoot;
     const marks = [
-      ...host.querySelectorAll<HTMLElement>("[data-term][data-first='true']"),
-      ...[...(shadow?.querySelectorAll<HTMLElement>("[data-term][data-first='true']") ?? [])],
+      ...host.querySelectorAll<HTMLElement>("[data-term]"),
+      ...[...(shadow?.querySelectorAll<HTMLElement>("[data-term]") ?? [])],
     ];
     if (marks.length === 0) {
       setVisibleTerms([]);
       return;
     }
     const visible = new Set<string>();
+    let last: string[] = [];
+    let timer: number | null = null;
+    const publish = () => {
+      const ids = [...visible];
+      if (ids.length === 0 && last.length > 0) return;
+      last = ids;
+      setVisibleTerms(ids);
+    };
     const io = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
@@ -392,12 +400,14 @@ export function ArticlePane({ article }: { article: Article }) {
           if (entry.isIntersecting) visible.add(id);
           else visible.delete(id);
         }
-        setVisibleTerms([...visible]);
+        if (timer) window.clearTimeout(timer);
+        timer = window.setTimeout(publish, 180);
       },
-      { root: host, rootMargin: "-8% 0px -22% 0px", threshold: 0 },
+      { root: host, rootMargin: "10% 0px 12% 0px", threshold: 0 },
     );
     for (const mark of marks) io.observe(mark);
     return () => {
+      if (timer) window.clearTimeout(timer);
       io.disconnect();
     };
   }, [article.id, formatSaved, skinTick, setVisibleTerms]);

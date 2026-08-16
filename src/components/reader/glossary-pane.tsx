@@ -1,7 +1,8 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { AskTeacherPane } from "@/components/reader/ask-dock";
 import { TermCard } from "@/components/reader/term-card";
 import { TermDetail } from "@/components/reader/term-detail";
+import { useSpreadTerms } from "@/hooks/use-spread-terms";
 import { fieldKicker } from "@/lib/fields";
 import type { Article, Term } from "@/lib/types";
 import { useReader } from "@/store/reader";
@@ -33,10 +34,15 @@ export function GlossaryPane({ article }: { article: Article }) {
   const extraMap = useReader((s) => s.extraTerms);
   const extra = extraMap[article.id] ?? EMPTY_TERMS;
   const visibleIds = useReader((s) => s.visibleTermIds);
+  const follow = useReader((s) => s.marginFollow);
   const visible = new Set(visibleIds);
 
   const asked = extra.filter((t) => t.source === "asked");
-  const prepared = article.terms.filter((t) => t.source !== "asked");
+  const prepared = useMemo(
+    () => article.terms.filter((t) => t.source !== "asked"),
+    [article.terms],
+  );
+  const rows = useSpreadTerms(prepared, visibleIds, follow);
 
   const active =
     article.terms.find((t) => t.id === activeTermId) ?? prepared[0] ?? null;
@@ -69,13 +75,15 @@ export function GlossaryPane({ article }: { article: Article }) {
       ) : (
         <>
           <header className="gloss-margin-head shrink-0">
-            <p className="caps text-ink-faint">{fieldKicker(article.field)}</p>
+            <p className="caps text-ink-faint">
+              {follow ? "On this page" : fieldKicker(article.field)}
+            </p>
           </header>
           <div ref={listRef} className="gloss-margin-list ink-scroll min-h-0 flex-1">
             {asked.length > 0 ? (
               <section className="mb-4">
                 <p className="caps px-1 mb-1 text-ink-faint">You asked</p>
-                <ul className="space-y-0.5">
+                <ul>
                   {asked.map((term) => (
                     <li key={term.id}>
                       <TermCard
@@ -89,16 +97,21 @@ export function GlossaryPane({ article }: { article: Article }) {
                 </ul>
               </section>
             ) : null}
-            <ul className="space-y-0.5">
-              {prepared.map((term) => (
-                <li key={term.id}>
-                  <TermCard
-                    term={term}
-                    active={focusedTermId === term.id}
-                    dimmed={visible.size > 0 && !visible.has(term.id)}
-                    onOpen={() => expandTerm(term.id)}
-                    onFocus={() => focusTerm(term.id)}
-                  />
+            <ul>
+              {rows.map((row) => (
+                <li
+                  key={row.term.id}
+                  className={row.phase === "out" ? "margin-row is-out" : "margin-row is-in"}
+                >
+                  <div className="margin-row-clip">
+                    <TermCard
+                      term={row.term}
+                      active={focusedTermId === row.term.id}
+                      dimmed={!follow && visible.size > 0 && !visible.has(row.term.id)}
+                      onOpen={() => expandTerm(row.term.id)}
+                      onFocus={() => focusTerm(row.term.id)}
+                    />
+                  </div>
                 </li>
               ))}
             </ul>

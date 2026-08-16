@@ -29,6 +29,7 @@ type Settings = {
   typeScale: TypeScale;
   articleId: string;
   formatSaved: boolean;
+  marginFollow: boolean;
 };
 
 export type AskState = {
@@ -52,6 +53,7 @@ function loadSettings(): Settings {
     typeScale: 1,
     articleId: SEED_ARTICLES[0].id,
     formatSaved: true,
+    marginFollow: true,
   };
   if (typeof window === "undefined") return fallback;
   try {
@@ -99,6 +101,7 @@ type ReaderState = {
   importOpen: boolean;
   hintSeen: boolean;
   formatSaved: boolean;
+  marginFollow: boolean;
   ask: AskState | null;
   pulseToken: string | null;
   visibleTermIds: string[];
@@ -116,6 +119,7 @@ type ReaderState = {
   setLibraryOpen: (open: boolean) => void;
   setImportOpen: (open: boolean) => void;
   setFormatSaved: (on: boolean) => void;
+  setMarginFollow: (on: boolean) => void;
   dismissHint: () => void;
   applyAskTap: (input: {
     blockKey: string;
@@ -173,6 +177,7 @@ export const useReader = create<ReaderState>((set, get) => ({
   importOpen: false,
   hintSeen: true,
   formatSaved: true,
+  marginFollow: true,
   ask: null,
   pulseToken: null,
   visibleTermIds: [],
@@ -280,6 +285,10 @@ export const useReader = create<ReaderState>((set, get) => ({
   setFormatSaved: (formatSaved) => {
     persistSettings({ formatSaved });
     set({ formatSaved });
+  },
+  setMarginFollow: (marginFollow) => {
+    persistSettings({ marginFollow });
+    set({ marginFollow });
   },
   dismissHint: () => {
     try {

@@ -266,6 +266,35 @@
 .margin-dim {
   opacity: 0.38;
 }
+
+.margin-row {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+}
+.margin-row.is-in {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transition:
+    opacity 460ms ease,
+    grid-template-rows 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+@starting-style {
+  .margin-row.is-in {
+    grid-template-rows: 0fr;
+    opacity: 0;
+  }
+}
+.margin-row.is-out {
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    opacity 520ms ease,
+    grid-template-rows 580ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.margin-row-clip {
+  overflow: hidden;
+}
 [data-type="0"] .origin-host { zoom: 0.92; }
 [data-type="1"] .origin-host { zoom: 1; }
 [data-type="2"] .origin-host { zoom: 1.12; }
