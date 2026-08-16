@@ -1,5 +1,6 @@
 import { isCommonEnglish } from "@/lib/common-english";
 import type { Term } from "@/lib/types";
+import { unitsInPassage } from "@/lib/unit-lexicon";
 
 /**
  * Precision on the automatic underlines. Recall on the tap-to-ask path.
@@ -17,7 +18,10 @@ export type UnitPair = { long: string; short: string };
 const AMBIGUOUS_ALONE = new Set(
   `work train charge interest demand expression process action right case party
    power force matter order record service value return account note brief
-   motion appeal holding offer stock share plant`.split(/\s+/),
+   motion appeal holding offer stock share plant culture medium strain
+   passage treat current potential spin color group ring normal regular
+   simple free exact base salt spirit reduce organic significant positive
+   negative`.split(/\s+/),
 );
 
 export function harvestPairs(text: string): UnitPair[] {
@@ -65,10 +69,24 @@ type Loose = {
 
 export function refineTaughtTerms<T extends Loose>(terms: T[], passage: string): T[] {
   const pairs = harvestPairs(passage);
+  const known = unitsInPassage(passage);
   const next = terms.map((t) => ({
     ...t,
     aliases: [...t.aliases],
   }));
+
+  for (const unit of known) {
+    const host = next.find((t) => {
+      const bag = [t.term, ...t.aliases].map((s) => s.toLowerCase());
+      return bag.includes(unit.toLowerCase()) || containsUnit(unit, t.term);
+    });
+    if (host && host.term.toLowerCase() !== unit.toLowerCase() && containsUnit(unit, host.term)) {
+      if (!host.aliases.some((a) => a.toLowerCase() === host.term.toLowerCase())) {
+        host.aliases.push(host.term);
+      }
+      host.term = unit;
+    }
+  }
 
   for (const pair of pairs) {
     const host = next.find((t) => {
@@ -161,6 +179,12 @@ export function snapUnit(
       pair.long.toLowerCase().includes(lower)
     ) {
       return { text: pair.long };
+    }
+  }
+
+  for (const unit of unitsInPassage(surrounding)) {
+    if (unit.toLowerCase() === lower || containsUnit(unit, needle)) {
+      return { text: unit };
     }
   }
 

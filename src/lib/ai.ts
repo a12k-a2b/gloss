@@ -79,9 +79,9 @@ You work across graduate-level writing: software, AI, engineering, economics, la
 
 INCLUDE
 - Terms of art, including ordinary English used in a special sense (consideration, interest, charge, expression, work, train, demand).
-- Multi-word concepts that are the real unit (due process, comparative advantage, gradient descent, central dogma, pull request, private CA).
+- Multi-word concepts that are the real unit, including lowercase ones that look like ordinary English or Latin: due process, habeas corpus, comparative advantage, gene expression, in vitro, wave function, null hypothesis, pull request, private CA, gradient descent. Brown v. Board is one unit, not two names.
 - Named methods, systems, theorems, cases, instruments, protocols.
-- Abbreviations the passage treats as already known.
+- Abbreviations the passage treats as already known (GDP, PCR, EBITDA, DNA) — as aliases of the long form when the long form is there.
 
 EXCLUDE
 - Everyday words used in the everyday sense.

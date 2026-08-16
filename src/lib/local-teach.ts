@@ -2,6 +2,7 @@ import type { AnalysisResult } from "@/lib/ai";
 import { isCommonEnglish } from "@/lib/common-english";
 import { localExplain } from "@/lib/explain";
 import { FIELD_LABEL, inferField, readerStance } from "@/lib/fields";
+import { unitsInPassage } from "@/lib/unit-lexicon";
 
 const LEARNED = /(?:ology|onomy|ography|opathy|ectomy|itis|osis|oma|icity|ization|isation|ential|ential|ulence|escence|hedron)$/i;
 const LEARNED_PREFIX = /^(?:pseudo|proto|meta|hyper|hypo|poly|mono|multi|neo|anti|auto|iso|hetero|homo|intra|inter|trans|neuro|cardio|onco|cyto|geno|photo|thermo)/i;
@@ -60,6 +61,8 @@ export function localAnalyze(title: string, text: string): AnalysisResult {
     add(counts, m[1] ?? "", 4);
     add(counts, m[2] ?? "", 4);
   }
+
+  for (const unit of unitsInPassage(text)) add(counts, unit, 12);
 
   const ranked = [...counts.values()]
     .map((c) => ({
