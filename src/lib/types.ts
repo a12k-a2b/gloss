@@ -53,6 +53,7 @@ export type Article = {
   custom?: boolean;
   url?: string;
   addedAt?: number;
+  field?: string;
   blocks: Block[];
   terms: Term[];
 };

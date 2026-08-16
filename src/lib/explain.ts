@@ -46,7 +46,7 @@ export function localExplain(input: ExplainInput): Term {
       term: label,
       aliases: [],
       gloss: "The point of this stretch, in one breath.",
-      explanation: `Denys is saying: ${sentence} Read it as a human sentence first; the proper nouns are just the tools he used to do that job.`,
+      explanation: `The writer is saying: ${sentence} Read it as a human sentence first. The proper nouns are tools for that job, not the job itself.`,
       analogy:
         "Like overhearing one story at a dinner table. You do not need every name to know what the story is about.",
       context: `You pointed at this in “${input.title}.”`,
@@ -77,8 +77,8 @@ export function localExplain(input: ExplainInput): Term {
     id: `ask-${slug(input.phrase)}`,
     term: label,
     aliases: [],
-    gloss: `A word Denys is using in: “${sentence.slice(0, 90)}${sentence.length > 90 ? "…" : ""}”`,
-    explanation: `“${input.phrase}” sits in this sentence: ${sentence} If it is a name, it is probably a tool, a company, or a piece of his setup. If it is an ordinary word, the sentence around it is doing the real work — that is the thing to understand.`,
+    gloss: `A word used here in: “${sentence.slice(0, 90)}${sentence.length > 90 ? "…" : ""}”`,
+    explanation: `“${input.phrase}” sits in this sentence: ${sentence} If it is a name, it is probably a tool, a method, a case, or a piece of the writer's setup. If it is an ordinary word, it may be doing special work in this field — the sentence around it is the thing to understand.`,
     analogy:
       "Like circling a word in a letter and reading the whole sentence again before you reach for a dictionary.",
     context: `You pointed at this in “${input.title}.”`,

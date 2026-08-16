@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { AskTeacherPane } from "@/components/reader/ask-dock";
 import { TermCard } from "@/components/reader/term-card";
 import { TermDetail } from "@/components/reader/term-detail";
+import { fieldKicker } from "@/lib/fields";
 import type { Article, Term } from "@/lib/types";
 import { useReader } from "@/store/reader";
 
@@ -66,7 +67,7 @@ export function GlossaryPane({ article }: { article: Article }) {
       ) : (
         <>
           <header className="gloss-margin-head shrink-0 border-b border-rule">
-            <p className="caps">In this passage</p>
+            <p className="caps">{fieldKicker(article.field)}</p>
             <p className="mt-1 font-sans text-sm text-ink-soft">
               Underlined words are already taught. Tap one. Any other word: tap
               twice. Tap again to take more of the sentence.

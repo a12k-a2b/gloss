@@ -790,6 +790,7 @@ const happyArticle: Article = {
   dek: "A remote control for Claude Code, a Daylight in the bag, and a cluster that never opens a street door.",
   source: "Denys Vitali · Jan 12, 2026",
   url: "https://blog.denv.it/posts/im-happy-engineer-now/",
+  field: "software",
   minutes: 20,
   blocks: [
     {
@@ -1403,6 +1404,7 @@ const tailscaleArticle: Article = {
   title: "Tailscale + Traefik + Private CA",
   dek: "A mesh wants a handshake. A cluster gives every pod a room number. So he puts the doorman on the street door.",
   source: "Denys Vitali · Jan 12, 2026",
+  field: "software",
   minutes: 10,
   blocks: [
     {

@@ -283,6 +283,7 @@ export function ImportSheet() {
       custom: true,
       url: pageUrl,
       addedAt: Date.now(),
+      field: result.analysis.field,
       blocks,
       terms,
     };
@@ -356,9 +357,10 @@ export function ImportSheet() {
         </header>
         <div className="ink-scroll min-h-0 flex-1 space-y-4 px-4 py-4">
           <p className="font-serif text-md leading-reading text-ink-soft">
-            Paste any public blog or article link. Gloss opens the page, keeps
-            the writing, and fills the right column with a note for every name a
-            non-technical reader would trip on.
+            Paste any public blog or article link — software, law, biology,
+            economics, whatever you are teaching yourself. Gloss opens the
+            page, keeps the writing, and fills the right column with a note
+            for every name a reader new to that field would trip on.
           </p>
           <label className="block">
             <span className="caps">Link</span>

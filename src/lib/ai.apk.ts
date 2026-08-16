@@ -1,6 +1,8 @@
 export type AnalysisResult = {
   title: string;
   dek: string;
+  field?: string;
+  reader?: string;
   terms: never[];
 };
 
