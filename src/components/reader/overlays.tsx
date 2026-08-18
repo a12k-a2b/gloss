@@ -650,18 +650,40 @@ export function ImportSheet() {
           </p>
           <label className="block">
             <span className="caps">Link</span>
-            <input
-              type="url"
-              inputMode="url"
-              autoCapitalize="off"
-              autoCorrect="off"
-              spellCheck={false}
-              data-allow-select
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              placeholder="https://…"
-              className="mt-1 h-12 w-full rounded-md border border-rule bg-paper px-3 font-sans text-md text-ink outline-none focus-visible:border-ink"
-            />
+            <div className="mt-1 flex gap-2">
+              <input
+                type="text"
+                inputMode="url"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                data-allow-select
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                onPaste={(e) => {
+                  const text = e.clipboardData.getData("text");
+                  if (!text) return;
+                  e.preventDefault();
+                  setUrl(text.trim());
+                }}
+                placeholder="https://…"
+                className="h-12 min-w-0 flex-1 rounded-md border border-rule bg-paper px-3 font-sans text-md text-ink outline-none focus-visible:border-ink"
+              />
+              <button
+                type="button"
+                className="hairline h-12 shrink-0 rounded-md px-3 font-sans text-sm"
+                onClick={async () => {
+                  try {
+                    const text = await navigator.clipboard.readText();
+                    if (text.trim()) setUrl(text.trim());
+                  } catch {
+                    setError("Tap the box, then paste.");
+                  }
+                }}
+              >
+                Paste
+              </button>
+            </div>
           </label>
           <div>
             <p className="caps">Or paste the article</p>
@@ -680,6 +702,12 @@ export function ImportSheet() {
             <textarea
               value={raw}
               onChange={(e) => setRaw(e.target.value)}
+              onPaste={(e) => {
+                const text = e.clipboardData.getData("text");
+                if (!text) return;
+                e.preventDefault();
+                setRaw((prev) => prev + text);
+              }}
               placeholder="Paste here…"
               rows={8}
               data-allow-select

@@ -1,10 +1,13 @@
 import { useEffect } from "react";
 
 function allowNative(target: EventTarget | null) {
-  return (
-    target instanceof Element &&
-    !!target.closest("input, textarea, [data-allow-select]")
-  );
+  const el =
+    target instanceof Element
+      ? target
+      : target instanceof Node
+        ? target.parentElement
+        : null;
+  return !!el?.closest("input, textarea, [data-allow-select]");
 }
 
 export function NativeMenuShield() {

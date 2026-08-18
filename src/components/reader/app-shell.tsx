@@ -76,10 +76,8 @@ export function AppShell() {
       className="flex h-dvh max-w-full flex-col overflow-hidden bg-paper text-ink pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]"
       onContextMenu={(e) => {
         const t = e.target;
-        if (
-          t instanceof Element &&
-          t.closest("input, textarea, [data-allow-select]")
-        ) {
+        const el = t instanceof Element ? t : t instanceof Node ? t.parentElement : null;
+        if (el?.closest("input, textarea, [data-allow-select]")) {
           return;
         }
         e.preventDefault();
