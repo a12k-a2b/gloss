@@ -389,6 +389,13 @@ export const useReader = create<ReaderState>((set, get) => ({
     } catch {
       /* ignore */
     }
+    persistSettings({
+      paginate: false,
+      marginFollow: true,
+      typeScale: 1,
+      themePref: "system",
+      glossaryLeft: false,
+    });
     set({
       onboarded: true,
       hintSeen: true,
