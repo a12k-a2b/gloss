@@ -145,7 +145,7 @@ const STEPS: Step[] = [
   },
   {
     kicker: "Your own pages",
-    title: "Tap the open-book icon — left of the title.",
+    title: "Tap the book with the plus — left of the title.",
     beaver: "This is how a new essay comes in. Have a look. Don’t paste anything yet.",
     gate: "import",
     wait: "import-open",

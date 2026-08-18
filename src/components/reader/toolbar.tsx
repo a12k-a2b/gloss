@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { ArrowLeftRight, BookCopy, BookOpen, Contrast, Library, ListFilter, Minus, Moon, Newspaper, Plus, SunMedium, SunMoon } from "lucide-react";
+import { ArrowLeftRight, BookCopy, BookPlus, Contrast, Library, ListFilter, Minus, Moon, Newspaper, Plus, SunMedium, SunMoon } from "lucide-react";
 import { OfflinePill } from "@/components/reader/offline-pill";
 import { currentTourWait } from "@/components/reader/onboarding";
 import { cn } from "@/lib/cn";
@@ -67,8 +67,8 @@ export function Toolbar() {
       <IconBtn label="Library" onClick={() => setLibraryOpen(true)}>
         <Library className="size-5" strokeWidth={1.6} />
       </IconBtn>
-      <IconBtn tour="import" label="Open a passage" onClick={() => setImportOpen(true)}>
-        <BookOpen className="size-5" strokeWidth={1.6} />
+      <IconBtn tour="import" label="Add a page" onClick={() => setImportOpen(true)}>
+        <BookPlus className="size-5" strokeWidth={1.6} />
       </IconBtn>
 
       <div className="mx-2 min-w-0 flex-1">
