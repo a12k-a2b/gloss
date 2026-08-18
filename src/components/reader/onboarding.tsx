@@ -12,7 +12,8 @@ type Gate =
   | "filter"
   | "type-up"
   | "type-down"
-  | "import";
+  | "import"
+  | "swap";
 
 type Wait =
   | "ink"
@@ -34,7 +35,9 @@ type Wait =
   | "type-big"
   | "type-normal"
   | "import-open"
-  | "import-close";
+  | "import-close"
+  | "glossary-left"
+  | "glossary-right";
 
 type Step = {
   kicker: string;
@@ -72,14 +75,14 @@ const STEPS: Step[] = [
   },
   {
     kicker: "The easy deeper",
-    title: "On the right: put a finger on a word-card and swipe it toward the essay (to the left).",
-    beaver: "Less work than a tap, once you have the habit. The long lesson should slide in — analogy, picture, the works.",
+    title: "On a word-card: swipe it either way — left or right.",
+    beaver: "Both hands work. We’re trying which swipe feels like ‘go deeper.’ The long lesson should slide in.",
     gate: "glossary",
     wait: "open",
   },
   {
     kicker: "The easy deeper",
-    title: "Now swipe that lesson back to the right — or use the back arrow.",
+    title: "Now swipe that lesson either way to put it away — or use the back arrow.",
     beaver: "You’re in the list again. The essay never left.",
     gate: "glossary",
     wait: "close",
@@ -87,7 +90,7 @@ const STEPS: Step[] = [
   {
     kicker: "Tap works too",
     title: "A tap on a card, or one tap on an underlined word in the essay, opens the same lesson.",
-    beaver: "Swipe or tap. I don’t mind. Swipe is usually the lighter hand.",
+    beaver: "Swipe either way, or tap. I don’t mind. Swipe is usually the lighter hand.",
     gate: "look",
     next: "Got it",
   },
@@ -239,6 +242,20 @@ const STEPS: Step[] = [
     wait: "type-normal",
   },
   {
+    kicker: "Which side",
+    title: "Tap the two-arrow icon. The essay should jump to the right.",
+    beaver: "Teacher under the left hand. Essay under the right. See if your eyes like it.",
+    gate: "swap",
+    wait: "glossary-left",
+  },
+  {
+    kicker: "Which side",
+    title: "Tap it again. Essay back on the left — that’s how we started.",
+    beaver: "Leave it wherever you actually read. This is a feel thing, not a rule.",
+    gate: "swap",
+    wait: "glossary-right",
+  },
+  {
     kicker: "You’re in",
     title: "That’s the instrument. The Happy essay is waiting. Tap a word that feels like fog.",
     beaver: "Library has “Meet the beaver again” if a friend wants a second pass.",
@@ -263,6 +280,7 @@ type Snap = {
   marginFollow: boolean;
   typeScale: number;
   importOpen: boolean;
+  glossaryLeft: boolean;
 };
 
 function matchesWait(wait: Step["wait"], s: Snap): boolean {
@@ -284,6 +302,8 @@ function matchesWait(wait: Step["wait"], s: Snap): boolean {
   if (wait === "type-normal") return s.typeScale <= 1;
   if (wait === "import-open") return s.importOpen;
   if (wait === "import-close") return !s.importOpen;
+  if (wait === "glossary-left") return s.glossaryLeft;
+  if (wait === "glossary-right") return !s.glossaryLeft;
   return false;
 }
 
@@ -308,6 +328,7 @@ export function Onboarding() {
   const setPaginate = useReader((s) => s.setPaginate);
   const setMarginFollow = useReader((s) => s.setMarginFollow);
   const setTypeScale = useReader((s) => s.setTypeScale);
+  const setGlossaryLeft = useReader((s) => s.setGlossaryLeft);
   const openArticle = useReader((s) => s.openArticle);
   const collapse = useReader((s) => s.collapse);
   const dismissAsk = useReader((s) => s.dismissAsk);
@@ -319,6 +340,7 @@ export function Onboarding() {
   const marginFollow = useReader((s) => s.marginFollow);
   const typeScale = useReader((s) => s.typeScale);
   const importOpen = useReader((s) => s.importOpen);
+  const glossaryLeft = useReader((s) => s.glossaryLeft);
   const step = useReader((s) => s.tourStep);
   const setTourStep = useReader((s) => s.setTourStep);
 
@@ -328,6 +350,7 @@ export function Onboarding() {
     setPaginate(false);
     setMarginFollow(true);
     setTypeScale(1);
+    setGlossaryLeft(false);
     openArticle(SEED_ARTICLES[0].id);
     collapse();
     dismissAsk();
@@ -338,6 +361,7 @@ export function Onboarding() {
     setPaginate,
     setMarginFollow,
     setTypeScale,
+    setGlossaryLeft,
     openArticle,
     collapse,
     dismissAsk,
@@ -356,6 +380,7 @@ export function Onboarding() {
       marginFollow,
       typeScale,
       importOpen,
+      glossaryLeft,
     };
     if (matchesWait(card.wait, snap)) {
       const t = window.setTimeout(() => setTourStep(step + 1), 280);
@@ -372,6 +397,7 @@ export function Onboarding() {
     marginFollow,
     typeScale,
     importOpen,
+    glossaryLeft,
     setTourStep,
   ]);
 

@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { BookCopy, BookOpen, Contrast, Library, ListFilter, Minus, Moon, Newspaper, Plus, SunMedium, SunMoon } from "lucide-react";
+import { ArrowLeftRight, BookCopy, BookOpen, Contrast, Library, ListFilter, Minus, Moon, Newspaper, Plus, SunMedium, SunMoon } from "lucide-react";
 import { OfflinePill } from "@/components/reader/offline-pill";
 import { currentTourWait } from "@/components/reader/onboarding";
 import { cn } from "@/lib/cn";
@@ -58,6 +58,8 @@ export function Toolbar() {
   const setMarginFollow = useReader((s) => s.setMarginFollow);
   const paginate = useReader((s) => s.paginate);
   const setPaginate = useReader((s) => s.setPaginate);
+  const glossaryLeft = useReader((s) => s.glossaryLeft);
+  const setGlossaryLeft = useReader((s) => s.setGlossaryLeft);
   const hasOrigin = !!article.origin;
 
   return (
@@ -89,6 +91,14 @@ export function Toolbar() {
           <Newspaper className="size-5" strokeWidth={1.6} />
         </IconBtn>
       ) : null}
+      <IconBtn
+        tour="swap"
+        label={glossaryLeft ? "Essay on the left" : "Essay on the right"}
+        pressed={glossaryLeft}
+        onClick={() => setGlossaryLeft(!glossaryLeft)}
+      >
+        <ArrowLeftRight className="size-5" strokeWidth={1.6} />
+      </IconBtn>
       <IconBtn
         tour="pages"
         label={paginate ? "Scroll the page" : "Turn pages"}

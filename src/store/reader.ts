@@ -33,6 +33,7 @@ type Settings = {
   formatSaved: boolean;
   marginFollow: boolean;
   paginate: boolean;
+  glossaryLeft: boolean;
   shelfCode: string;
 };
 
@@ -60,6 +61,7 @@ function loadSettings(): Settings {
     formatSaved: true,
     marginFollow: true,
     paginate: false,
+    glossaryLeft: false,
     shelfCode: "",
   };
   if (typeof window === "undefined") return fallback;
@@ -119,6 +121,7 @@ type ReaderState = {
   formatSaved: boolean;
   marginFollow: boolean;
   paginate: boolean;
+  glossaryLeft: boolean;
   shelfCode: string;
   ask: AskState | null;
   pulseToken: string | null;
@@ -142,6 +145,7 @@ type ReaderState = {
   setFormatSaved: (on: boolean) => void;
   setMarginFollow: (on: boolean) => void;
   setPaginate: (on: boolean) => void;
+  setGlossaryLeft: (on: boolean) => void;
   setShelfCode: (code: string) => void;
   dismissHint: () => void;
   finishOnboarding: () => void;
@@ -210,6 +214,7 @@ export const useReader = create<ReaderState>((set, get) => ({
   formatSaved: true,
   marginFollow: true,
   paginate: false,
+  glossaryLeft: false,
   shelfCode: "",
   ask: null,
   pulseToken: null,
@@ -361,6 +366,10 @@ export const useReader = create<ReaderState>((set, get) => ({
     persistSettings({ paginate });
     set({ paginate });
   },
+  setGlossaryLeft: (glossaryLeft) => {
+    persistSettings({ glossaryLeft });
+    set({ glossaryLeft });
+  },
   setShelfCode: (shelfCode) => {
     persistSettings({ shelfCode });
     set({ shelfCode });
@@ -388,6 +397,7 @@ export const useReader = create<ReaderState>((set, get) => ({
       marginFollow: true,
       typeScale: 1,
       themePref: "system",
+      glossaryLeft: false,
       importOpen: false,
     });
   },
@@ -408,6 +418,7 @@ export const useReader = create<ReaderState>((set, get) => ({
       marginFollow: true,
       typeScale: 1,
       themePref: "system",
+      glossaryLeft: false,
       articleId: SEED_ARTICLES[0].id,
       mobilePane: "read",
     });

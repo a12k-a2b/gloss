@@ -38,7 +38,7 @@ export function TermDetail({
   kicker?: string;
   backLabel?: string;
 }) {
-  const swipe = useSwipe({ onSwipeRight: onBack });
+  const swipe = useSwipe({ onSwipeLeft: onBack, onSwipeRight: onBack });
 
   return (
     <div className="flex h-full min-h-0 flex-col" {...swipe}>

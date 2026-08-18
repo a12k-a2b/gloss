@@ -25,6 +25,7 @@ export function AppShell() {
   const onboarded = useReader((s) => s.onboarded);
   const tourStep = useReader((s) => s.tourStep);
   const gate = currentTourGate(onboarded, tourStep);
+  const glossaryLeft = useReader((s) => s.glossaryLeft);
   useSystemTheme();
 
   useEffect(() => {
@@ -87,12 +88,12 @@ export function AppShell() {
       <NativeMenuShield />
       <Toolbar />
       <div className="relative min-h-0 flex-1">
-        <div className="gloss-split">
-          <div className="h-full min-h-0 min-w-0">
+        <div className={glossaryLeft ? "gloss-split is-glossary-left" : "gloss-split"}>
+          <div className="gloss-pane-read h-full min-h-0 min-w-0">
             <ArticlePane article={article} />
           </div>
-          <div className="bg-rule" aria-hidden />
-          <div className="h-full min-h-0 min-w-0">
+          <div className="gloss-pane-rule bg-rule" aria-hidden />
+          <div className="gloss-pane-words h-full min-h-0 min-w-0">
             <GlossaryPane article={article} />
           </div>
         </div>

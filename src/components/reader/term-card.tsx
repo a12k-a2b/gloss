@@ -17,6 +17,7 @@ export function TermCard({
 }) {
   const swipe = useSwipe({
     onSwipeLeft: onOpen,
+    onSwipeRight: onOpen,
   });
 
   return (
