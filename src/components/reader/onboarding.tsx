@@ -406,6 +406,17 @@ export function Onboarding() {
   const card = STEPS[step] ?? STEPS[STEPS.length - 1];
   const last = step >= STEPS.length - 1;
 
+  const leave = () => {
+    setThemePref("system");
+    setPaginate(false);
+    setMarginFollow(true);
+    setTypeScale(1);
+    setGlossaryLeft(false);
+    collapse();
+    dismissAsk();
+    finish();
+  };
+
   return (
     <div className="tour-banner" role="dialog" aria-labelledby="tour-title">
       <div className="tour-banner-fig">
@@ -417,26 +428,25 @@ export function Onboarding() {
           {card.title}
         </h2>
         {card.aside ? <p className="tour-aside">{card.aside}</p> : null}
-        {card.next ? (
-          <button
-            type="button"
-            className="onboard-next mt-3"
-            onClick={() => {
-              if (last) {
-                setThemePref("system");
-                collapse();
-                dismissAsk();
-                finish();
-              } else {
-                setTourStep(step + 1);
-              }
-            }}
-          >
-            {card.next}
+        <div className="tour-actions">
+          {card.next ? (
+            <button
+              type="button"
+              className="onboard-next"
+              onClick={() => {
+                if (last) leave();
+                else setTourStep(step + 1);
+              }}
+            >
+              {card.next}
+            </button>
+          ) : (
+            <p className="tour-wait">Do that on the page. I’ll wait.</p>
+          )}
+          <button type="button" className="onboard-skip" onClick={leave}>
+            Skip
           </button>
-        ) : (
-          <p className="tour-wait">Do that on the page. I’ll wait.</p>
-        )}
+        </div>
       </div>
     </div>
   );
