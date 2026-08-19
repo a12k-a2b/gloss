@@ -41,7 +41,11 @@ export function TermDetail({
   const swipe = useSwipe({ onSwipeLeft: onBack, onSwipeRight: onBack });
 
   return (
-    <div className="flex h-full min-h-0 flex-col" {...swipe}>
+    <div
+      className="flex h-full min-h-0 flex-col touch-pan-y"
+      data-tour="lesson"
+      {...swipe}
+    >
       <header className="flex shrink-0 items-center gap-2 border-b border-rule px-2 py-2">
         <button
           type="button"

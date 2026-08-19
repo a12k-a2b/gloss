@@ -187,7 +187,7 @@
 }
 .native-menu-shield i {
   position: absolute;
-  pointer-events: auto;
+  pointer-events: none;
   background: transparent;
 }
 .native-menu-shield i:nth-child(1) {
@@ -540,20 +540,20 @@
   bottom: 0;
   z-index: 30;
   display: grid;
-  grid-template-columns: 7.5rem 1fr;
-  gap: 0.25rem 0.75rem;
+  grid-template-columns: 5.2rem 1fr;
+  gap: 0.15rem 0.65rem;
   align-items: end;
-  padding: 0.5rem 0.85rem 0.75rem;
+  padding: 0.4rem 0.75rem 0.55rem;
   background: var(--color-paper);
   box-shadow: 0 -1px 0 var(--color-rule);
-  max-height: 42%;
+  max-height: 28%;
   overflow: auto;
 }
 .tour-banner-fig .beaver-wait {
   padding: 0;
 }
 .tour-banner-fig .beaver-wait-fig {
-  width: 6.4rem;
+  width: 4.8rem;
 }
 .tour-title {
   margin-top: 0.15rem;
@@ -615,7 +615,8 @@
   pointer-events: auto;
 }
 [data-tour-gate="glossary"] [data-tour="glossary"],
-[data-tour-gate="glossary"] [data-tour="back"] {
+[data-tour-gate="glossary"] [data-tour="back"],
+[data-tour-gate="glossary"] [data-tour="lesson"] {
   pointer-events: auto;
 }
 [data-tour-gate] .tour-banner,
@@ -645,6 +646,7 @@
 .page-stage {
   overflow: hidden;
   perspective: 1800px;
+  touch-action: pan-y;
 }
 
 .page-stage .article-measure {
@@ -723,7 +725,7 @@
   line-height: var(--leading-reading);
   color: var(--color-ink);
   text-wrap: pretty;
-  touch-action: manipulation;
+  touch-action: pan-y;
 }
 
 .article-body p,

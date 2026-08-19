@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { BeaverWait } from "@/components/reader/beaver-wait";
 import { SEED_ARTICLES } from "@/data/articles";
 import { useReader } from "@/store/reader";
@@ -343,9 +343,15 @@ export function Onboarding() {
   const glossaryLeft = useReader((s) => s.glossaryLeft);
   const step = useReader((s) => s.tourStep);
   const setTourStep = useReader((s) => s.setTourStep);
+  const primed = useRef(false);
 
   useEffect(() => {
-    if (!hydrated || done) return;
+    if (!hydrated || done) {
+      primed.current = false;
+      return;
+    }
+    if (primed.current) return;
+    primed.current = true;
     setThemePref("system");
     setPaginate(false);
     setMarginFollow(true);
@@ -441,7 +447,13 @@ export function Onboarding() {
               {card.next}
             </button>
           ) : (
-            <p className="tour-wait">Do that on the page. I’ll wait.</p>
+            <button
+              type="button"
+              className="onboard-next"
+              onClick={() => setTourStep(step + 1)}
+            >
+              Continue
+            </button>
           )}
           <button type="button" className="onboard-skip" onClick={leave}>
             Skip

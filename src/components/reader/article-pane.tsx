@@ -493,6 +493,11 @@ export function ArticlePane({ article }: { article: Article }) {
   const onPointerDown = (e: React.PointerEvent) => {
     if (e.pointerType === "mouse" && e.button !== 0) return;
     pointer.current = { x: e.clientX, y: e.clientY, id: e.pointerId };
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {
+      /* ignore */
+    }
   };
 
   const onPointerUp = (e: React.PointerEvent) => {
@@ -622,8 +627,16 @@ export function ArticlePane({ article }: { article: Article }) {
       data-tour="article"
       onPointerDown={onPointerDown}
       onPointerUp={onPointerUp}
-      onPointerCancel={() => {
+      onPointerCancel={(e) => {
+        const start = pointer.current;
         pointer.current = null;
+        if (!start || !paginate || start.id !== e.pointerId) return;
+        const dx = e.clientX - start.x;
+        const dy = e.clientY - start.y;
+        if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy) * 1.1) {
+          if (dx < 0) goPage(page + 1, "next");
+          else goPage(page - 1, "prev");
+        }
       }}
     >
       {flip ? (

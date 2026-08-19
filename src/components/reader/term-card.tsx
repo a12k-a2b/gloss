@@ -28,6 +28,7 @@ export function TermCard({
         active && "bg-paper-sunken",
         dimmed && !active && "margin-dim",
       )}
+      onClick={onOpen}
       {...swipe}
     >
       <button
