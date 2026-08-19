@@ -65,9 +65,17 @@ function PwaRegister() {
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
     if ("Capacitor" in window) return;
-    void navigator.serviceWorker.register("/sw.js").catch(() => {
-      /* offline pin is optional */
-    });
+    void navigator.serviceWorker
+      .register("/sw.js?v=4")
+      .then((reg) => {
+        void reg.update();
+        document.addEventListener("visibilitychange", () => {
+          if (document.visibilityState === "visible") void reg.update();
+        });
+      })
+      .catch(() => {
+        /* offline pin is optional */
+      });
   }, []);
   return null;
 }

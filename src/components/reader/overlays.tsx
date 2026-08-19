@@ -303,6 +303,9 @@ export function LibrarySheet() {
             >
               Meet the beaver again
             </button>
+            <p className="mt-4 font-sans text-[11px] uppercase tracking-[0.14em] text-ink-faint">
+              Gloss · 18 Aug · know this
+            </p>
           </div>
         </div>
       </div>

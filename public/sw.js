@@ -1,5 +1,5 @@
 /* Gloss offline pin — shell + fonts so the library still opens on a plane. */
-const CACHE = "gloss-v2";
+const CACHE = "gloss-v4";
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
