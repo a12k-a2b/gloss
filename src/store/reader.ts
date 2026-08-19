@@ -10,6 +10,7 @@ import {
   type AskToken,
 } from "@/lib/ask-select";
 import { snapUnit } from "@/lib/units";
+import { loadKnown, saveKnown, surfacesFor, uniqueKnown } from "@/lib/known";
 import type {
   Article,
   ContrastName,
@@ -126,6 +127,8 @@ type ReaderState = {
   ask: AskState | null;
   pulseToken: string | null;
   visibleTermIds: string[];
+  known: string[];
+  teachingId: string | null;
   hydrate: () => void;
   setTheme: (theme: ThemeName) => void;
   setThemePref: (pref: ThemePref) => void;
@@ -164,12 +167,31 @@ type ReaderState = {
   dismissAsk: () => void;
   setPulseToken: (id: string | null) => void;
   setVisibleTerms: (ids: string[]) => void;
+  setTeaching: (id: string | null) => void;
+  mergeTerms: (articleId: string, terms: Term[], meta?: { title?: string; dek?: string; field?: string }) => void;
+  knowTerm: (term: Term) => void;
+  forgetKnown: (label: string) => void;
 };
 
 function persistSettings(partial: Partial<Settings>) {
   if (typeof window === "undefined") return;
   const current = loadSettings();
   localStorage.setItem(SETTINGS_KEY, JSON.stringify({ ...current, ...partial }));
+}
+
+function persistCustom(next: Article[]) {
+  try {
+    localStorage.setItem(CUSTOM_KEY, JSON.stringify(next));
+  } catch {
+    try {
+      localStorage.setItem(
+        CUSTOM_KEY,
+        JSON.stringify(next.map((a) => ({ ...a, origin: undefined }))),
+      );
+    } catch {
+      /* quota */
+    }
+  }
 }
 
 function persistAsked(map: Record<string, Term[]>) {
@@ -219,6 +241,8 @@ export const useReader = create<ReaderState>((set, get) => ({
   ask: null,
   pulseToken: null,
   visibleTermIds: [],
+  known: [],
+  teachingId: null,
   hydrate: () => {
     const s = loadSettings();
     const custom = loadCustom();
@@ -235,6 +259,7 @@ export const useReader = create<ReaderState>((set, get) => ({
       ...s,
       customArticles: custom,
       extraTerms,
+      known: loadKnown(),
       hydrated: true,
       hintSeen,
       onboarded,
@@ -520,6 +545,45 @@ export const useReader = create<ReaderState>((set, get) => ({
   dismissAsk: () => set({ ask: null, pulseToken: null }),
   setPulseToken: (pulseToken) => set({ pulseToken }),
   setVisibleTerms: (visibleTermIds) => set({ visibleTermIds }),
+  setTeaching: (teachingId) => set({ teachingId }),
+  mergeTerms: (articleId, incoming, meta) => {
+    const next = get().customArticles.map((article) => {
+      if (article.id !== articleId) return article;
+      const have = new Set(article.terms.map((t) => t.term.toLowerCase()));
+      const extra = incoming.filter((t) => !have.has(t.term.toLowerCase()));
+      return {
+        ...article,
+        terms: [...article.terms, ...extra],
+        title: meta?.title || article.title,
+        dek: meta?.dek || article.dek,
+        field: meta?.field || article.field,
+      };
+    });
+    persistCustom(next);
+    set({ customArticles: next });
+  },
+  knowTerm: (term) => {
+    const known = uniqueKnown([...get().known, ...surfacesFor(term)]);
+    saveKnown(known);
+    const focused =
+      get().focusedTermId === term.id || get().activeTermId === term.id
+        ? null
+        : get().focusedTermId;
+    set({
+      known,
+      expanded: get().activeTermId === term.id ? false : get().expanded,
+      focusedTermId: focused,
+      activeTermId: get().activeTermId === term.id ? null : get().activeTermId,
+    });
+  },
+  forgetKnown: (label) => {
+    const drop = label.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+    const known = get().known.filter(
+      (k) => k.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim() !== drop,
+    );
+    saveKnown(known);
+    set({ known });
+  },
 }));
 
 function currentArticleFrom(state: {

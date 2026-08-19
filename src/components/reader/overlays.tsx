@@ -2,9 +2,8 @@ import { useState, type ReactNode } from "react";
 import { Trash2, X } from "lucide-react";
 import { BeaverWait } from "@/components/reader/beaver-wait";
 import { SEED_ARTICLES } from "@/data/articles";
-import { ingestUrl } from "@/lib/ingest";
+import { ingestAndOpen, teachArticleInStages } from "@/lib/ingest";
 import { isOnline } from "@/lib/online";
-import { prewarmBoards } from "@/lib/illustrate";
 import {
   downloadShelf,
   mintShelfCode,
@@ -20,24 +19,9 @@ import {
   seconds,
   summarizeLog,
 } from "@/lib/import-log";
-import { teachPassage } from "@/lib/teach";
 import { cn } from "@/lib/cn";
-import type { Article, Term } from "@/lib/types";
+import type { Article } from "@/lib/types";
 import { useCurrentArticle, useReader } from "@/store/reader";
-
-function slugId(s: string) {
-  return (
-    s
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)/g, "")
-      .slice(0, 40) || "passage"
-  );
-}
-
-function termId(term: string) {
-  return slugId(term) || `term-${Math.random().toString(36).slice(2, 8)}`;
-}
 
 function hostOf(url?: string) {
   if (!url) return null;
@@ -77,6 +61,8 @@ export function LibrarySheet() {
   const setShelfCode = useReader((s) => s.setShelfCode);
   const mergeArticles = useReader((s) => s.mergeArticles);
   const replayOnboarding = useReader((s) => s.replayOnboarding);
+  const known = useReader((s) => s.known);
+  const forgetKnown = useReader((s) => s.forgetKnown);
   const [join, setJoin] = useState("");
   const [shelfNote, setShelfNote] = useState<string | null>(null);
 
@@ -212,6 +198,29 @@ export function LibrarySheet() {
                 />
               ))}
             </ul>
+          </Section>
+
+          <Section title="You already know" empty={known.length === 0}>
+            {known.length === 0 ? (
+              <p className="px-5 py-6 font-serif text-md text-ink-soft">
+                When a word is no longer fog, tap “I know this.” It will stop
+                underlining it — in this essay and the next.
+              </p>
+            ) : (
+              <ul className="flex flex-wrap gap-2 px-5 pb-5">
+                {known.map((label) => (
+                  <li key={label}>
+                    <button
+                      type="button"
+                      onClick={() => forgetKnown(label)}
+                      className="hairline h-10 rounded-md px-3 font-sans text-sm"
+                    >
+                      {label} · undo
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
           </Section>
 
           <Section title="This shelf">
@@ -443,82 +452,40 @@ export function ImportSheet() {
     origin?: Article["origin"],
   ) => {
     const flat = flattenBlocks(blocks);
-    setBusy("teach");
-    const t0 = performance.now();
-    const result = await teachPassage(title, flat.slice(0, 16000));
-    const teachMs = Math.round(performance.now() - t0);
-    if (!result.ok) {
-      recordImport({
-        title,
-        via: "paste",
-        ok: false,
-        error: result.error,
-        ms: { teach: teachMs, total: teachMs },
-      });
-      setError(result.error);
-      setBusy(null);
-      return;
-    }
-    const used = new Set<string>();
-    const terms: Term[] = result.analysis.terms.map((t) => {
-      let id = termId(t.term);
-      let n = 2;
-      while (used.has(id)) id = `${termId(t.term)}-${n++}`;
-      used.add(id);
-      return {
-        id,
-        term: t.term,
-        aliases: t.aliases ?? [],
-        gloss: t.gloss,
-        explanation: t.explanation,
-        analogy: t.analogy,
-        context: t.context,
-        excerpt: t.excerpt,
-        related: t.related ?? [],
-        diagram: t.diagram,
-        source: "auto" as const,
-      };
-    });
     const article: Article = {
       id: `custom-${Date.now()}`,
-      title: result.analysis.title || title,
-      dek: result.analysis.dek || dek,
+      title,
+      dek,
       source,
       minutes: Math.max(1, Math.round(flat.split(/\s+/).length / 220)),
       custom: true,
       url: pageUrl,
       addedAt: Date.now(),
-      field: result.analysis.field,
       origin,
       blocks,
-      terms,
+      terms: [],
     };
     addArticle(article);
-    let drawMs: number | undefined;
-    let boards = 0;
-    if (isOnline() && article.terms.length) {
-      setBusy("draw");
-      const d0 = performance.now();
-      await prewarmBoards(article.id, article.terms, (done, total) => {
-        setDrawProgress(`${done} of ${total}`);
-        boards = total;
-      });
-      drawMs = Math.round(performance.now() - d0);
-    }
-    if (shelfCode) void uploadShelf(shelfCode, useReader.getState().customArticles);
-    recordImport({
-      title: article.title,
-      via: "paste",
-      ok: true,
-      words: flat.split(/\s+/).length,
-      terms: article.terms.length,
-      boards,
-      ms: { teach: teachMs, draw: drawMs, total: teachMs + (drawMs ?? 0) },
-    });
     setUrl("");
     setRaw("");
     setBusy(null);
     setOpen(false);
+    const t0 = performance.now();
+    const taught = await teachArticleInStages(article.id);
+    if (shelfCode) void uploadShelf(shelfCode, useReader.getState().customArticles);
+    recordImport({
+      title:
+        useReader.getState().customArticles.find((a) => a.id === article.id)?.title ??
+        title,
+      via: "paste",
+      ok: true,
+      words: flat.split(/\s+/).length,
+      terms: taught.terms,
+      ms: {
+        teach: taught.firstMs + taught.restMs,
+        total: Math.round(performance.now() - t0),
+      },
+    });
   };
 
   const onBring = async () => {
@@ -535,7 +502,7 @@ export function ImportSheet() {
         }
         setBusy("fetch");
         const t0 = performance.now();
-        const brought = await ingestUrl(href);
+        const brought = await ingestAndOpen(href);
         if (!brought.ok) {
           recordImport({
             title: href,
@@ -553,18 +520,6 @@ export function ImportSheet() {
           setBusy(null);
           return;
         }
-        addArticle(brought.article);
-        let drawMs: number | undefined;
-        let boards = 0;
-        if (isOnline() && brought.article.terms.length) {
-          setBusy("draw");
-          const d0 = performance.now();
-          await prewarmBoards(brought.article.id, brought.article.terms, (done, total) => {
-            setDrawProgress(`${done} of ${total}`);
-            boards = total;
-          });
-          drawMs = Math.round(performance.now() - d0);
-        }
         if (shelfCode) {
           void uploadShelf(shelfCode, useReader.getState().customArticles);
         }
@@ -575,11 +530,9 @@ export function ImportSheet() {
           ok: true,
           words: flattenBlocks(brought.article.blocks).split(/\s+/).length,
           terms: brought.article.terms.length,
-          boards,
           ms: {
             fetch: brought.timing.fetchMs,
             teach: brought.timing.teachMs,
-            draw: drawMs,
             total: Math.round(performance.now() - t0),
           },
         });
@@ -600,6 +553,7 @@ export function ImportSheet() {
       setBusy(null);
     }
   };
+
 
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center sm:items-center">

@@ -54,6 +54,7 @@ export type AnalysisResult = z.infer<typeof analysisSchema>;
 const analyzeInput = z.object({
   title: z.string(),
   text: z.string().min(40).max(20000),
+  scope: z.enum(["opening", "full"]).optional(),
 });
 
 export const analyzePassage = createServerFn({ method: "POST" })
@@ -67,6 +68,12 @@ export const analyzePassage = createServerFn({ method: "POST" })
       };
     }
 
+    const scope = data.scope === "opening" ? "opening" : "full";
+    const pick =
+      scope === "opening"
+        ? "This is ONLY the first page. Choose 4–8 things the reader will actually stop on in THESE paragraphs. Be picky. Do not hunt the rest of the essay."
+        : "Choose 14–24 things that reader would actually stop on.";
+
     const prompt = `You are Gloss, the teacher who sits in the margin of a paper study reader.
 
 The reader is a bright adult teaching themselves a field they were not trained in. They may later become dangerous in that field. They are not stupid. They are new.
@@ -75,7 +82,7 @@ You work across graduate-level writing: software, AI, engineering, economics, la
 
 1. Name the field in 1–3 words (software, constitutional law, cell biology, …).
 2. Name the assumed reader in one sentence.
-3. Choose 14–24 things that reader would actually stop on.
+3. ${pick}
 
 INCLUDE
 - Terms of art, including ordinary English used in a special sense (consideration, interest, charge, expression, work, train, demand).
@@ -100,7 +107,7 @@ Prefer the first occurrence of the real unit. Prefer concepts over brand names, 
 For software and AI writing (a common case on this reader): assume they have never opened a terminal and do not work on a software team. Still pick concepts (daemon, mesh, hostNetwork), not only product names.
 
 For each term:
-- gloss: one sentence, ≤ 160 characters, concrete, a little dry-playful. No dictionary throat-clearing. Do not use another unexplained jargon word.
+- gloss: two short sentences, ≤ 320 characters. First sentence: what it is, in this passage. Second: why a new reader should care, or the picture. Concrete. A little dry-playful. No dictionary throat-clearing. Do not use another unexplained jargon word.
 - explanation: 2–4 sentences. Plain words first. If you must use a technical word, define it in the same breath.
 - analogy: one everyday picture from OUTSIDE the field (kitchen, mail, city, sports, music, a school). Commit to it. Never explain a term with a sibling term from the same field.
 - context: what THIS passage is using the word to do. Quote the job, not the textbook.

@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
-import { extractSharedUrl, ingestUrl } from "@/lib/ingest";
+import { extractSharedUrl, ingestAndOpen } from "@/lib/ingest";
 import { recordImport } from "@/lib/import-log";
 import { isOnline } from "@/lib/online";
-import { prewarmBoards } from "@/lib/illustrate";
 import { uploadShelf } from "@/lib/shelf";
 import { useReader } from "@/store/reader";
 
@@ -29,7 +28,6 @@ function takeSharedFromLocation(): string | null {
 }
 
 export function ShareInbox() {
-  const addArticle = useReader((s) => s.addArticle);
   const openArticle = useReader((s) => s.openArticle);
   const hydrated = useReader((s) => s.hydrated);
   const [toast, setToast] = useState<Toast | null>(null);
@@ -43,7 +41,7 @@ export function ShareInbox() {
       setBusy(true);
       setToast({ title: "Bringing that page into Gloss…" });
       const t0 = performance.now();
-      const result = await ingestUrl(href);
+      const result = await ingestAndOpen(href);
       if (cancelled) return;
       if (!result.ok) {
         recordImport({
@@ -62,9 +60,7 @@ export function ShareInbox() {
         setToast({ title: "Could not bring that page in.", error: result.error });
         return;
       }
-      addArticle(result.article);
       if (isOnline()) {
-        void prewarmBoards(result.article.id, result.article.terms);
         const code = useReader.getState().shelfCode;
         if (code) void uploadShelf(code, useReader.getState().customArticles);
       }
@@ -98,7 +94,7 @@ export function ShareInbox() {
       cancelled = true;
       window.removeEventListener("gloss-share", onShare as EventListener);
     };
-  }, [hydrated, addArticle, openArticle]);
+  }, [hydrated, openArticle]);
 
   if (!toast) return null;
 

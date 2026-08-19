@@ -3,6 +3,7 @@ import { OriginArticle } from "@/components/reader/origin-article";
 import { cn } from "@/lib/cn";
 import { tokensFromParts, tokenize, padContains, type AskToken } from "@/lib/ask-select";
 import { markArticle, type MarkedBlock, type TextPart } from "@/lib/wrap-terms";
+import { termIsKnown } from "@/lib/known";
 import type { Article } from "@/lib/types";
 import { usePageBreaks } from "@/hooks/use-page-breaks";
 import { loadPlace, savePlace } from "@/lib/place";
@@ -343,6 +344,7 @@ export function ArticlePane({ article }: { article: Article }) {
   const pulseToken = useReader((s) => s.pulseToken);
   const formatSaved = useReader((s) => s.formatSaved);
   const paginate = useReader((s) => s.paginate);
+  const known = useReader((s) => s.known);
   const setVisibleTerms = useReader((s) => s.setVisibleTerms);
   const setTourPage = useReader((s) => s.setTourPage);
   const [skinTick, setSkinTick] = useState(0);
@@ -352,7 +354,14 @@ export function ArticlePane({ article }: { article: Article }) {
   );
   const flipping = useRef(false);
   const measure = useRef<HTMLElement>(null);
-  const marked = useMemo(() => markArticle(article), [article]);
+  const liveArticle = useMemo(
+    () => ({
+      ...article,
+      terms: article.terms.filter((t) => !termIsKnown(t, known)),
+    }),
+    [article, known],
+  );
+  const marked = useMemo(() => markArticle(liveArticle), [liveArticle]);
   const useOrigin = !!(formatSaved && article.origin);
   const breaks = usePageBreaks(scroller, measure, paginate, [
     article.id,
@@ -667,7 +676,7 @@ export function ArticlePane({ article }: { article: Article }) {
         </p>
         {useOrigin ? (
           <OriginArticle
-            article={article}
+            article={liveArticle}
             activeId={focusedTermId}
             ask={
               ask

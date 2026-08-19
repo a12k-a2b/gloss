@@ -4,6 +4,7 @@ import { TermCard } from "@/components/reader/term-card";
 import { TermDetail } from "@/components/reader/term-detail";
 import { useSpreadTerms } from "@/hooks/use-spread-terms";
 import { fieldKicker } from "@/lib/fields";
+import { termIsKnown } from "@/lib/known";
 import type { Article, Term } from "@/lib/types";
 import { useReader } from "@/store/reader";
 
@@ -35,12 +36,15 @@ export function GlossaryPane({ article }: { article: Article }) {
   const extra = extraMap[article.id] ?? EMPTY_TERMS;
   const visibleIds = useReader((s) => s.visibleTermIds);
   const follow = useReader((s) => s.marginFollow);
+  const known = useReader((s) => s.known);
+  const knowTerm = useReader((s) => s.knowTerm);
+  const teachingId = useReader((s) => s.teachingId);
   const visible = new Set(visibleIds);
 
-  const asked = extra.filter((t) => t.source === "asked");
+  const asked = extra.filter((t) => t.source === "asked" && !termIsKnown(t, known));
   const prepared = useMemo(
-    () => article.terms.filter((t) => t.source !== "asked"),
-    [article.terms],
+    () => article.terms.filter((t) => t.source !== "asked" && !termIsKnown(t, known)),
+    [article.terms, known],
   );
   const rows = useSpreadTerms(prepared, visibleIds, follow);
 
@@ -77,7 +81,13 @@ export function GlossaryPane({ article }: { article: Article }) {
         <>
           <header className="gloss-margin-head shrink-0">
             <p className="caps text-ink-faint">
-              {follow ? "On this page" : fieldKicker(article.field)}
+              {teachingId === article.id
+                ? prepared.length
+                  ? "Teaching the rest…"
+                  : "Teaching this page…"
+                : follow
+                  ? "On this page"
+                  : fieldKicker(article.field)}
             </p>
           </header>
           <div ref={listRef} className="gloss-margin-list ink-scroll min-h-0 flex-1">
@@ -92,6 +102,7 @@ export function GlossaryPane({ article }: { article: Article }) {
                         active={focusedTermId === term.id}
                         onOpen={() => expandTerm(term.id)}
                         onFocus={() => focusTerm(term.id)}
+                        onKnow={() => knowTerm(term)}
                       />
                     </li>
                   ))}
@@ -111,6 +122,7 @@ export function GlossaryPane({ article }: { article: Article }) {
                       dimmed={!follow && visible.size > 0 && !visible.has(row.term.id)}
                       onOpen={() => expandTerm(row.term.id)}
                       onFocus={() => focusTerm(row.term.id)}
+                      onKnow={() => knowTerm(row.term)}
                     />
                   </div>
                 </li>

@@ -12,9 +12,10 @@ export type TeachResult =
 export async function teachPassage(
   title: string,
   text: string,
+  scope: "opening" | "full" = "full",
 ): Promise<TeachResult> {
   try {
-    const result = await analyzePassage({ data: { title, text } });
+    const result = await analyzePassage({ data: { title, text, scope } });
     if (result.ok) {
       return {
         ok: true,

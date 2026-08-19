@@ -5,6 +5,7 @@ import { InkDiagram } from "@/components/reader/ink-diagram";
 import { cn } from "@/lib/cn";
 import { useSwipe } from "@/hooks/use-swipe";
 import type { Term } from "@/lib/types";
+import { useReader } from "@/store/reader";
 
 function Section({
   kicker,
@@ -39,6 +40,7 @@ export function TermDetail({
   backLabel?: string;
 }) {
   const swipe = useSwipe({ onSwipeLeft: onBack, onSwipeRight: onBack });
+  const knowTerm = useReader((s) => s.knowTerm);
 
   return (
     <div
@@ -55,6 +57,16 @@ export function TermDetail({
         >
           <ArrowLeft className="size-4" strokeWidth={1.75} />
           {backLabel}
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            knowTerm(term);
+            onBack();
+          }}
+          className="ml-auto h-11 px-3 font-sans text-[11px] font-medium uppercase tracking-[0.14em] text-ink-soft"
+        >
+          I know this
         </button>
       </header>
 
