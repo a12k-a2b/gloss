@@ -32,15 +32,43 @@ opted_out() { # <VAR_NAME>
 # Collapse whitespace so `git   push  --force` matches too.
 FLAT=$(printf '%s' "$CMD" | tr '\n' ' ' | tr -s ' ')
 
+# Only inspect segments that actually INVOKE git. Matching raw substrings of
+# the whole command line blocks things that merely mention a git verb -
+# `echo "run git commit next"`, `grep -r "git push --force" docs/`, or a commit
+# message containing the words. A guard that blocks reading a file about git is
+# noise, and noise is what gets guards disabled.
+#
+# Split on shell separators, drop leading env assignments (VAR=1 git ...), and
+# keep only segments whose first word is git.
+git_segments() {
+  # printf '%s\n', not '%s': without the trailing newline `while read` drops
+  # the final line, and for a single-command input that is the only line - so
+  # every guard silently passed.
+  printf '%s\n' "$FLAT" \
+    | sed 's/&&/\n/g; s/||/\n/g; s/;/\n/g; s/|/\n/g' \
+    | while IFS= read -r seg; do
+        seg=$(printf '%s' "$seg" | sed 's/^ *//; s/ *$//')
+        while :; do
+          case "$seg" in
+            [A-Za-z_][A-Za-z_0-9]*=*\ *) seg=${seg#* } ;;
+            *) break ;;
+          esac
+        done
+        case "$seg" in git\ *) printf '%s\n' "$seg" ;; esac
+      done
+}
+GIT_SEGS=$(git_segments)
+
 # 1. Force-push to a shared branch destroys other agents' bases.
-case "$FLAT" in
-  *"git push"*--force*|*"git push"*" -f "*|*"git push"*--delete*)
+case "$GIT_SEGS" in
+  *"git push"*)
     # Isolate the push invocation itself. Testing the exemption against the
     # whole line let one safe push anywhere in a compound command exempt every
     # other push in it.
-    PUSH_SEG=$(printf '%s' "$FLAT" | sed 's/&&/\n/g; s/;/\n/g; s/||/\n/g' \
-               | grep -- 'git push' | grep -E -- '--force|[[:space:]]-f[[:space:]]|--delete' \
-               | grep -v -- '--force-with-lease' | head -1)
+    PUSH_SEG=$(printf '%s' "$GIT_SEGS" \
+               | grep -- 'git push' | grep -E -- '--force|[[:space:]]-f([[:space:]]|$)|--delete' \
+               | grep -v -- '--force-with-lease' \
+               | grep -v -- '--dry-run' | head -1)   # a dry run pushes nothing
     case "${PUSH_SEG:-}" in
       "") ;;  # every forceful push in this line uses --force-with-lease
       *)
@@ -59,7 +87,7 @@ own, use --force-with-lease on your own feature branch instead."
 esac
 
 # 2. Committing straight to the default branch is how parallel work collides.
-case "$FLAT" in
+case "$GIT_SEGS" in
   *"git commit"*)
     if [ "$BRANCH" = "$DEFAULT" ] && ! opted_out VIBE_ALLOW_DEFAULT_COMMIT; then
       hook_block "Refusing: commit directly to '$DEFAULT'.
@@ -73,7 +101,10 @@ esac
 
 # 3. Hard reset / clean with uncommitted work in the tree.
 if ! opted_out VIBE_ALLOW_DISCARD; then
-case "$FLAT" in
+# A dry run discards nothing, and restoring one named path is not a whole-tree
+# discard - blocking either teaches people to reach for the override reflexively.
+case "$GIT_SEGS" in
+  *--dry-run*|*"git restore "[!.]*|*"git checkout -- "[!.]*) ;;
   *"git reset --hard"*|*"git checkout ."*|*"git clean -"*[fdx]*|*"git restore ."*)
     if [ -n "$(git status --porcelain 2>/dev/null)" ]; then
       hook_block "Refusing: '$FLAT' would discard uncommitted changes in this worktree.
@@ -105,7 +136,9 @@ esac
 
 # 5. `git checkout <branch>` inside a worktree that owns a branch: switching
 #    away silently orphans the worktree's identity and its port mapping.
-case "$FLAT" in
+case "$GIT_SEGS" in
+  # A pathspec checkout (`git checkout main -- file`) is not a branch switch.
+  *" -- "*) ;;
   "git checkout "[!-]*|"git switch "[!-]*)
     if [ -f .vibe/workspace.json ]; then
       OWN=$(sed -n 's/.*"branch": *"\([^"]*\)".*/\1/p' .vibe/workspace.json | head -1)

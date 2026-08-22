@@ -89,10 +89,12 @@ vibe wt clean --apply          # removes every worktree whose branch landed
 vibe fleet --prune             # deletes those branches on the remote too
 ```
 
-Nothing is deleted while it holds uncommitted changes or unpushed commits —
-`vibe wt rm` and `vibe wt clean` both refuse, and the unpushed check accounts
-for single-branch clones, where `git rev-list --not --remotes` reports pushed
-work as unpushed.
+Nothing is deleted while it holds uncommitted changes or unpushed commits.
+`vibe wt rm`, `vibe wt clean --apply` and `vibe land` all refuse, and the
+unpushed check accounts for single-branch clones, where
+`git rev-list --not --remotes` reports pushed work as unpushed. In a repo with
+no remote at all there is nowhere to push to, so only the dirty-tree check
+applies there.
 
 ## Ending a session
 

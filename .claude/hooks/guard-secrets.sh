@@ -20,6 +20,12 @@ if [ -z "$CONTENT" ]; then
   # MultiEdit: every replacement lives under .edits[].new_string
   CONTENT=$(hook_field '.tool_input.edits')
 fi
+if [ -z "$CONTENT" ]; then
+  # NotebookEdit is in this hook's matcher but puts the cell body in its own
+  # field, so without this a credential pasted into a notebook cell sailed
+  # straight through a guard that looked like it covered notebooks.
+  CONTENT=$(hook_field '.tool_input.new_source')
+fi
 [ -n "$CONTENT" ] || hook_skip
 
 # Files whose whole purpose is to hold placeholders.

@@ -93,7 +93,12 @@ case "$FILE" in
     # Only when PyYAML is actually importable - otherwise an ImportError would
     # be reported to the agent as a syntax error in a perfectly good file.
     if has python3 && python3 -c 'import yaml' 2>/dev/null; then
-      if ! python3 -c 'import sys,yaml; yaml.safe_load(open(sys.argv[1]))' "$FILE" 2>/dev/null; then
+      # safe_load_all, not safe_load: a multi-document file (--- separators,
+      # normal for Kubernetes and for some CI configs) makes safe_load raise on
+      # a perfectly valid file, and the hook would then reject every edit to it
+      # forever. Unknown tags are a different story - report those, since a
+      # plain YAML consumer would choke too.
+      if ! python3 -c 'import sys,yaml; list(yaml.safe_load_all(open(sys.argv[1])))' "$FILE" 2>/dev/null; then
         LINT_OUT="${LINT_OUT}
 $FILE is not valid YAML."
       fi
