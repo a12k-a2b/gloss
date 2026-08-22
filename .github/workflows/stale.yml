@@ -1,0 +1,33 @@
+# Closes what has already been abandoned, so `vibe fleet` shows real work.
+#
+# The point is not tidiness. An open PR nobody will finish is indistinguishable,
+# in every dashboard, from one that is one review away from landing.
+name: stale
+
+on:
+  schedule:
+    - cron: "17 4 * * 1"   # Monday, off the hour: cron at :00 is heavily contended
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v9
+        with:
+          days-before-pr-stale: 21
+          days-before-pr-close: 14
+          days-before-issue-stale: 60
+          days-before-issue-close: -1     # never auto-close an issue
+          stale-pr-label: stale
+          exempt-pr-labels: keep,blocked,epic
+          stale-pr-message: >
+            No activity for three weeks. If this is still wanted, push something
+            or take it out of draft; otherwise it will close in two weeks.
+            Closing costs nothing — the branch stays until you delete it.
+          delete-branch: false
+          operations-per-run: 60
