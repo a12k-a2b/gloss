@@ -99,7 +99,14 @@ jobs:
           if [ -z "$BASE" ] || ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then
             echo "no base to compare against; skipping"; exit 0
           fi
-          ADDED=$(git diff "$BASE...HEAD" -U0 | grep -E '^\+' || true)
+          # Restrict to code. Documentation that *describes* these patterns -
+          # a review checklist saying "watch for empty `catch {}`" - is not an
+          # empty catch, and a check that cannot tell prose from code fires on
+          # the very files written to explain it.
+          ADDED=$(git diff "$BASE...HEAD" -U0 -- . \
+                  ':(exclude)*.md' ':(exclude)*.rst' ':(exclude)*.txt' \
+                  ':(exclude).github/**' ':(exclude).claude/**' \
+                  | grep -E '^\+' || true)
           FAIL=0
           if printf '%s' "$ADDED" | grep -Eq '(\bit|\bdescribe|\btest)\.(only|skip)\b|\bxit\(|\bxdescribe\(|@pytest\.mark\.skip|t\.Skip\(|#\[ignore\]'; then
             echo "::error::This PR adds a skipped or focused test. Fix the test or delete it; do not park it."
