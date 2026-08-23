@@ -1,0 +1,58 @@
+# Automated review of every pull request, using the Claude subscription you
+# already pay for rather than a second per-seat review product.
+#
+# Two lines here are load-bearing and easy to get wrong:
+#   * `--comment` in the prompt. Without it Claude reviews the PR and writes
+#     the findings to the Actions run log, where nobody will ever read them.
+#   * `--allowedTools "mcp__github_inline_comment__create_inline_comment"` in
+#     claude_args. The action only starts the inline-comment MCP server when
+#     --allowedTools names it, even though the skill's own allowed-tools
+#     already lists it. Omit this and you get a silent zero-comment review.
+#
+# Claude skips draft PRs, closed PRs, trivial or automated PRs, and PRs that
+# already carry a Claude comment - so this does not spam a busy branch.
+#
+# Setup, once per repo:
+#   claude setup-token                 # produces a long-lived OAuth token
+#   then add it as the CLAUDE_CODE_OAUTH_TOKEN secret
+# or run `/install-github-app` from the repo (needs repo admin + gh auth).
+
+name: claude-review
+
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review, reopened]
+
+concurrency:
+  group: claude-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: read
+  issues: read
+  id-token: write        # required for the action's default GitHub App auth
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Two skips, both about not wasting the review:
+    #  * a fork PR gets no secrets, so this would fail with an opaque auth error
+    #  * an agent may push twenty times to one draft branch; reviewing each push
+    #    spends Actions minutes and attention on a branch that may be deleted
+    if: >-
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.draft == false
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          plugin_marketplaces: "https://github.com/anthropics/claude-code.git"
+          plugins: "code-review@claude-code-plugins"
+          prompt: "/code-review:code-review --comment ${{ github.repository }}/pull/${{ github.event.pull_request.number }}"
+          claude_args: '--allowedTools "mcp__github_inline_comment__create_inline_comment"'

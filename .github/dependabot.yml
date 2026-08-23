@@ -1,0 +1,26 @@
+# Weekly, grouped, and capped. Ungrouped daily updates on 47 repos produce more
+# PRs than anyone can review, which trains you to ignore the one that matters.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
+    open-pull-requests-limit: 2
+
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      # Patch and minor bumps land as one PR; majors stay separate because they
+      # are the ones that actually need reading.
+      safe-updates:
+        update-types: [minor, patch]
+    open-pull-requests-limit: 3
+    ignore:
+      - dependency-name: "*"
+        update-types: [version-update:semver-major]

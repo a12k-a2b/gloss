@@ -1,0 +1,19 @@
+# Which LOCAL files follow you into a new worktree.
+#
+# gitignore syntax. A file is copied only if it matches a pattern here AND is
+# already gitignored AND already exists in your main checkout. Nothing here
+# adds anything to git, and nothing here can cause a file to be committed --
+# this is purely "copy my local config into the new working copy so the build
+# works there too".
+#
+# Without it, a fresh worktree has no local.properties and the build fails on
+# the first command you run in it.
+.env
+.env.local
+.env.*.local
+.dev.vars
+.envrc
+local.properties
+keystore.properties
+config/secrets.json
+.vibe/
