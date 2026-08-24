@@ -38,6 +38,14 @@ npm run build
 - The book-with-plus brings in any public URL. The first page is taught first; the rest arrives while you read.
 - On the DC-1, Share from Chrome into Gloss.
 
+## The board (Nano Banana 2)
+
+When you swipe into a word, Gloss asks **Nano Banana 2** (Google’s fast, cheap image model — `gemini-3.1-flash-lite-image`) for a teaching figure. It only fires then, not for every word in the essay, so it stays cheap.
+
+If the idea has a before/after or a sequence, you get a two- or three-panel strip — the kind a teacher would sketch on a whiteboard. Ink on cream paper, no color, so it holds on a DC-1. The figure sits at the bottom of the lesson; by the time you scroll down, it’s usually already there.
+
+Needs a `GEMINI_API_KEY`. Offline, the ink diagram above it still works.
+
 ## Android / DC-1
 
 ```bash
