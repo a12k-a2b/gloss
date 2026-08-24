@@ -8,6 +8,16 @@ Missed a word? Tap it twice. Tap again to take the phrase, the sentence, the par
 
 Default essay: [I’m a Happy engineer now](https://blog.denv.it/posts/im-happy-engineer-now/) by Denys Vitali.
 
+## What it looks like
+
+The spread — essay on the left, teacher on the right:
+
+![Gloss two-column reader](docs/spread.png)
+
+Swipe a word and scroll the lesson. The board at the bottom is Nano Banana 2 — a two-panel sketch, ink on paper:
+
+![Kubernetes lesson with a Nano Banana teaching figure](docs/board.png)
+
 ## Share this
 
 **Repo (code):** https://github.com/a12k-a2b/gloss
