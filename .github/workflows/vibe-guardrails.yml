@@ -37,7 +37,7 @@ jobs:
     env:
       BASE_SHA: ${{ github.event.pull_request.base.sha }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           # gitleaks needs history to scan the commits the PR adds, not just
           # the final tree. Depth 0 on a small repo costs a second or two.
